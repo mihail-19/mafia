@@ -1,0 +1,43 @@
+<div class="header">
+	<div class="header_login" *ngIf="!isAuthorized">
+			<input [(ngModel)]="name"  id="name" >
+			<button class="header__login-button" (click)="login()">Войти</button>
+	</div>
+	<div class="header_login" *ngIf="isAuthorized">
+			<button class="header__login-button" (click)="logout()">Выйти</button>
+	</div>
+</div>
+<h1>Это игра мафия)</h1>
+<h1 class="authorize-note" *ngIf="!isAuthorized">Вы не вошли, введите имя пользователя чтобы начать</h1>
+<div class="mafia" *ngIf="isAuthorized">
+	<div class="game-prepare" *ngIf="!isGameStarted">
+		<div class="game-prepare__new-game">
+			Количество мафии: <input [(ngModel)]=mafiaNum>
+			<button (click)="startGame()">Начать игру</button>
+		</div>
+		<div class="game-prepare__join-game">
+			Код игры: <input [(ngModel)]=gameId>
+			<button (click)="joinGame()">Начать игру</button>
+		</div>
+	</div>
+	<div class="game-field" *ngIf="isGameStarted">
+		<div class="game-field__top">
+		
+		</div>
+		<div class="game-field__middle">
+			<div class="game-field__left-players">
+			
+			</div>
+			<div class="game-field__table">
+			
+			</div>
+			<div class="game-field__right-players">
+			
+			</div>
+		</div>
+		<div class="game-field__bottom">
+		
+		</div>
+	</div>
+</div>
+<router-outlet></router-outlet>

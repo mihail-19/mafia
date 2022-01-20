@@ -1,38 +1,38 @@
 package com.teslenko.mafia.web;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.SessionAttributes;
-import org.springframework.web.bind.support.SessionStatus;
-import org.springframework.web.servlet.ModelAndView;
 
 import com.teslenko.mafia.entity.Player;
 import com.teslenko.mafia.services.PlayerService;
 
 @RestController
-@RequestMapping("/players")
-@SessionAttributes("player")
 public class PlayerController {
 	@Autowired
 	private PlayerService playerService;
-	
-	@PostMapping("/add")
-	public Player add(@ModelAttribute("player") Player player, @RequestParam String name) {
-		Player res = playerService.createPlayer(name);
-		ModelAndView m = new ModelAndView();
-		m.addObject("player", res);
-		return res;
+	@GetMapping("")
+	public void test() {
+		System.out.println("test");
 	}
-	
-	@DeleteMapping("/logout")
-	public void logout(@ModelAttribute("player") Player player, SessionStatus sessionStatus) {
-		playerService.remove(player.getId());
-		sessionStatus.setComplete();
+	@CrossOrigin
+	@PostMapping("/login")
+	public String add(@RequestParam String name) {
+		System.out.println("login");
+		Player res = playerService.createPlayer(name);
+		return name;
+	}
+	@CrossOrigin
+	@GetMapping("/logout")
+	public void logout(@RequestHeader("name") String name) {
+		if(!playerService.isFreeName(name)) {
+			playerService.remove(playerService.getPlayer(name).getId());
+		}
 	}
 }
