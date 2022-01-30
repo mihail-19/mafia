@@ -4,7 +4,8 @@ public class Player {
 	private int id;
 	private String name;
 	private MafiaRole mafiaRole;
-	private boolean isAlive;
+	private RoleType roleType;
+	private boolean isAlive = true;
 	private boolean isUntouchable;
 	
 	public Player(String name) {
@@ -40,6 +41,13 @@ public class Player {
 	}
 
 	public void setAlive(boolean isAlive) {
+		this.isAlive = isAlive;
+	}
+	public boolean getIsAlive() {
+		return isAlive;
+	}
+	
+	public void setIsAlive(boolean isAlive) {
 		this.isAlive = isAlive;
 	}
 	
@@ -80,6 +88,14 @@ public class Player {
 
 	public void setUntouchable(boolean isUntouchable) {
 		this.isUntouchable = isUntouchable;
+	}
+
+	public RoleType getRoleType() {
+		return roleType;
+	}
+
+	public void setRoleType(RoleType roleType) {
+		this.roleType = roleType;
 	}
 	
 }

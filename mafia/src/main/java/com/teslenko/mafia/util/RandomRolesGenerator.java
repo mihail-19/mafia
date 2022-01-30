@@ -16,17 +16,11 @@ public class RandomRolesGenerator {
 	 * so could be static.
 	 */
 	static {
-		MafiaRole [] allRoles = MafiaRole.values();
-		for(MafiaRole role : allRoles) {
-			if(role.getRoleType() == RoleType.MAFIA) {
-				mafiaRoles.add(role);
-			}
-		}
-		for(MafiaRole role : allRoles) {
-			if(role.getRoleType() == RoleType.CITIZEN) {
-				citizenRoles.add(role);
-			}
-		}
+		mafiaRoles.add(MafiaRole.MAFIOSY);
+		
+		citizenRoles.add(MafiaRole.BEAUTY);
+		citizenRoles.add(MafiaRole.CITIZEN);
+		citizenRoles.add(MafiaRole.SHERIF);
 	}
 	public static MafiaRole generateMafiaRole() {
 		SecureRandom rnd = new SecureRandom();

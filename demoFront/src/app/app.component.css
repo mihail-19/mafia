@@ -1,0 +1,211 @@
+.mafia-header {
+	background-color: gray;
+	height: 80px;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.mafia-header_login {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 10px;
+}
+
+.mafia-header__login-button {
+	display: block;
+	cursor: pointer;
+	height: 30px;
+	width: 50px;
+	margin-left: 10px;
+	border-radius: 3px;
+}
+
+.mafia-header_login input {
+	height: 30px;
+}
+
+.mafia-header__name {
+	font-size: 18px;
+	font-weight: bold;
+}
+
+.mafia {
+	margin: 0 auto;
+	width: 1200px;
+	padding: 20px;
+	font-size: 20px;
+	height: 800px;
+}
+
+.game-prepare {
+	margin: 0 auto;
+	width: 500px;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: flex-start;
+	background-color: #e3ddba;
+	border-radius: 5px;
+}
+
+.game-prepare__field {
+	padding: 10px;
+	border-bottom: 1px solid gray;
+	margin-bottom: 50px;
+	width: 480px;
+}
+
+.game-prepare__field input {
+	height: 30px;
+	width: 50px;
+	border: 1px solid gray;
+	border-radius: 3px;
+	padding: 3px;
+}
+
+.game-prepare__field button {
+	height: 30px;
+	border-radius: 3px;
+	margin-left: 20px;
+	cursor: pointer;
+	padding: 5px;
+}
+
+.game-field {
+	border-top: 1px solid gray;
+	height: 100%;
+}
+
+.game-field__header {
+	text-align: center;
+	padding: 10px;
+	font-weight: bold;
+	font-style: italic;
+}
+
+.game-field__top {
+	height: 50px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+.game-field__start-button{
+	padding: 5px;
+	background-color: green;
+	border-radius: 10px;
+	height: 30px;
+	margin-right: 10px;
+	cursor: pointer;
+}
+.game-field__stop-button{
+	padding: 5px;
+	background-color: red;
+	border-radius: 10px;
+	height: 30px;
+	cursor: pointer;
+}
+.game-field__middle {
+	display: flex;
+	justify-content: center;
+	height: 80%;
+}
+
+.game-field__table {
+	border: 2px solid black;
+	width: 500px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.game-field__players {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+}
+
+.game-field__player-left-block {
+	padding: 0;
+	margin: 0;
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+}
+
+.game-field__player {
+	width: 100px;
+	height: 70px;
+	border: 1px solid black;
+	margin: 20px;
+}
+.game-field__player-img{
+	width: 100%;
+	height: 100%;
+}
+.game-field__player-img img{
+	width: 100%;
+	height: 100%;
+	object-fit: fill;
+}
+
+
+
+.chat {
+	display: flex;
+	flex-direction: column;
+	height: 90%;
+	font-size: 14px;
+	overflow: auto; 
+	overflow-x : hidden;
+}
+
+.chat__messages {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	
+	width: 90%;
+	padding: 15px;
+}
+
+.chat__message {
+	display: flex;
+	justify-content: flex-start;
+	padding: 5px 0 5px 0;
+}
+
+.chat__author-name {
+	font-weight: bold;
+}
+
+.chat__msg-text {
+	word-break: break-all;
+}
+
+.chat__inputs {
+	display: flex;
+	justify-content: flex-start;
+	padding: 0px 5px 5px 5px;
+}
+
+.chat__inputs input {
+	display: block;
+	height: 40px;
+	width: 80%;
+	border: 1px solid gray;
+}
+
+.chat__send-button {
+	display: block;
+	height: 40px;
+	margin-left: 5px;
+	padding: 5px;
+	background-color: #c4c4ff;
+	border-radius: 3px;
+	cursor: pointer;
+}
+
+.chat__send-button:hover {
+	background-color: #d9d9ff;
+}
