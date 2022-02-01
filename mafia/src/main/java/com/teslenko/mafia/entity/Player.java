@@ -1,5 +1,7 @@
 package com.teslenko.mafia.entity;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public class Player {
 	private int id;
 	private String name;

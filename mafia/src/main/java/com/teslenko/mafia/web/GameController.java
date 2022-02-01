@@ -23,8 +23,8 @@ import com.teslenko.mafia.services.PlayerService;
 @RestController
 @RequestMapping("/game")
 public class GameController {
-	public static final int DAY_TIME = 30;
-	public static final int NIGHT_TIME = 20;
+	public static final int DAY_TIME = 10;
+	public static final int NIGHT_TIME = 10;
 	private static final Logger LOGGER = LoggerFactory.getLogger(GameController.class);
 	@Autowired
 	private GameService gameService;

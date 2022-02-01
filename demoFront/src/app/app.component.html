@@ -66,8 +66,8 @@
 			<div class="game-field__players">
 				<div class="game-field__vote" *ngIf="game!.vote && game!.vote.isStarted">
 					<h2>Голосование</h2>
-					<div class="game-field__vote-row" *ngFor="let v of game!.vote.voteMap | keyvalue">
-						{{v.key}} -> {{v.value}}
+					<div class="game-field__vote-row" *ngFor="let v of game!.vote.voteMap">
+						{{v.voter.name}} -> {{v.target.name}}
 					</div>
 				</div>
 			</div>

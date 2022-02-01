@@ -2,15 +2,19 @@ package com.teslenko.mafia.entity;
 
 import java.time.LocalTime;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.teslenko.mafia.exception.VoteException;
 
 public class Vote {
 	private int totalPlayers;
-	private Map<Player, Player> voteMap = new HashMap<>();
+	private Set<VotePlayers> voteMap = new HashSet<>();
 	private boolean isStarted;
 	private LocalTime timeStart;
 	public final int voteTimeSeconds = 30;
@@ -19,17 +23,18 @@ public class Vote {
 	}
 	public void startVote() {
 		isStarted = true;
-		voteMap = new HashMap<>();
+		voteMap = new HashSet<>();
 		timeStart = LocalTime.now();
 	}
 	public void addVoice(Player voter, Player target) {
+		VotePlayers votePlayers = new VotePlayers(voter, target);
 		if(!isStarted) {
 			throw new VoteException("Vote is not started");
 		}
-		if(voteMap.containsKey(voter)) {
+		if(voteMap.contains(votePlayers)) {
 			throw new VoteException("Player {" + voter + "} already vote");
 		}
-		voteMap.put(voter, target);
+		voteMap.add(new VotePlayers(voter, target));
 	}
 	
 	public Player findChosenPlayer() {
@@ -50,7 +55,8 @@ public class Vote {
 	
 	private Player choosePlayer() {
 		Map<Player, Integer> res = new HashMap<>();
-		for(Player p : voteMap.values()) {
+		for(VotePlayers vp : voteMap) {
+			Player p = vp.getTarget();
 			if(res.containsKey(p)) {
 				res.put(p, res.get(p));
 			} else {
@@ -68,10 +74,11 @@ public class Vote {
 		}
 		
 	}
-	public Map<Player, Player> getVoteMap() {
+	
+	public Set<VotePlayers> getVoteMap() {
 		return voteMap;
 	}
-	public void setVoteMap(Map<Player, Player> voteMap) {
+	public void setVoteMap(Set<VotePlayers> voteMap) {
 		this.voteMap = voteMap;
 	}
 	public int getTotalPlayers() {
