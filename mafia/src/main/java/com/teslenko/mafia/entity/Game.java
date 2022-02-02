@@ -9,9 +9,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.teslenko.mafia.exception.VoteException;
+import com.teslenko.mafia.services.GameServiceImpl;
 import com.teslenko.mafia.util.RandomRolesGenerator;
 
 public class Game {
+	private static final Logger LOGGER = LoggerFactory.getLogger(Game.class);
 	private volatile int maxId = 1;
 	private int id;
 	private List<Player> players = new ArrayList<>();
@@ -116,12 +122,34 @@ public class Game {
 		}
 	}
 	public void citizenVoteAgain(Player voter, Player target) {
+		throwIfDead(voter, target);
 		if(players.contains(voter)) {
 			vote.addVoice(voter, target);
 		}
 	}
-	public void resetVote() {
+	public void mafiaVoteAgain(Player voter, Player target) {
+		if(voter.getRoleType().equals(RoleType.CITIZEN)) {
+			LOGGER.error("Player {" + voter.getName() + "} is not from mafia");
+			throw new VoteException("Player {" + voter.getName() + "} is not from mafia");
+		}
+		throwIfDead(voter, target);
+		if(players.contains(voter)) {
+			vote.addVoice(voter, target);
+		}
+	}
+	private void throwIfDead(Player ... players) {
+		for(Player p : players) {
+			if(!p.getIsAlive()) {
+				LOGGER.error("Player {" + p.getName() + "} is dead");
+				throw new VoteException("Player {" + p.getName() + "} is dead");
+			}
+		}
+	}
+	public void resetVoteCitizen() {
 		vote = new Vote(countAlive());
+	}
+	public void resetVoteMafia() {
+		vote = new Vote(countAliveMafia());
 	}
 	public int countAlive() {
 		int res = 0;
@@ -132,7 +160,27 @@ public class Game {
 		}
 		return res;
 	}
+	public int countAliveMafia() {
+		int res = 0;
+		for(Player p : players) {
+			if(p.getIsAlive() && p.getRoleType().equals(RoleType.MAFIA)) {
+				res++;
+			}
+		}
+		return res;
+	}
 	
+	/**
+	 * Computes period finish time according to day/night length.
+	 * @return
+	 */
+	public LocalTime finishTime() {
+		if (!getIsNight()) {
+			return getStartTime().plusSeconds(getDayTimeSeconds());
+		} else {
+			return getStartTime().plusSeconds(getNightTimeSeconds());
+		}
+	}
 	public void stopGame() {
 		isFinished = true;
 	}

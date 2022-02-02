@@ -99,44 +99,52 @@ public class GameServiceImpl implements GameService {
 		game.setStartTime(LocalTime.now());
 		new Thread(() -> {
 			while (!game.getIsFinished()) {
-				LocalTime finishTime;
-				if (!game.getIsNight()) {
-					finishTime = game.getStartTime().plusSeconds(game.getDayTimeSeconds());
-				} else {
-					finishTime = game.getStartTime().plusSeconds(game.getNightTimeSeconds());
-				}
+				LocalTime finishTime = game.finishTime();
 				while (LocalTime.now().isBefore(finishTime)) {
-					try {
-						Thread.sleep(100);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+					sleepWithPeriod(100);
 				}
 				if (!game.getIsNight()) {
-					game.getVote().startVote();
-					sendGameToPlayers(game);
-					LOGGER.trace("starting vote");
-					while(!game.getVote().isFinished()) {
-						try {
-							Thread.sleep(100);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-					LOGGER.trace("vote is finished -> " + game.getVote());
-					game.killPlayerByVoteResults();
-					game.setIsNight(true);
-					game.resetVote();
+					startVoteCitizen(game);
 				}else {
 					game.setIsNight(false);
-					game.resetVote();
+					game.resetVoteCitizen();
 				}
 				game.setStartTime(LocalTime.now());
 				sendGameToPlayers(game);
 			}
 		}).start();
 	}
-	
+	private void startVoteCitizen(Game game) {
+		LOGGER.trace("starting citizen vote for game " + game.getId());
+		game.resetVoteCitizen();
+		game.getVote().startVote();
+		sendGameToPlayers(game);
+		while(!game.getVote().isFinished()) {
+			sleepWithPeriod(100);
+		}
+		LOGGER.trace("citizen vote for game " + game.getId() + " is finished -> " + game.getVote());
+		game.killPlayerByVoteResults();
+		game.setIsNight(true);
+	}
+	private void startVoteMafia(Game game) {
+		LOGGER.trace("starting mafia vote for game " + game.getId());
+		game.resetVoteMafia();
+		game.getVote().startVote();
+		sendGameToPlayers(game);
+		while(!game.getVote().isFinished()) {
+			sleepWithPeriod(100);
+		}
+		LOGGER.trace("mafia vote for game " + game.getId() + " is finished -> " + game.getVote());
+		game.killPlayerByVoteResults();
+		game.setIsNight(true);
+	}
+	private void sleepWithPeriod(int delay) {
+		try {
+			Thread.sleep(delay);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
 	@Override
 	public void voteCitizen(int id, Player voter, Player target) {
 		Game game = getGame(id);
