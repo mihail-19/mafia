@@ -11,4 +11,5 @@ public interface GameService {
 	void addPlayer(int id, Player player);
 	Game addMessage(int id, Player player, String msg);
 	void voteCitizen(int id, Player voter, Player target);
+	void voteMafia(int id, Player voter, Player target);
 }

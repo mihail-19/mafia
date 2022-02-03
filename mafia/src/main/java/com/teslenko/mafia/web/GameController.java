@@ -33,29 +33,31 @@ public class GameController {
 	@Autowired 
 	private SimpMessagingTemplate messagingTemplate;
 	
-	
 	@PostMapping("/create")
 	public Game createGame(@RequestHeader("name") String name,
 			@RequestParam int mafiaNum) {
-		LOGGER.trace("create game for player {" + name + "}, mafia num = " + mafiaNum);
 		if(playerService.isFreeName(name)) {
+			LOGGER.warn("failed to create game, player with name={} is not registered", name);
 			throw new UnauthorizedPlayerException("not registered player with name {" + name + "}");
 		}
+		LOGGER.info("creating game for player {" + name + "}, mafia num = " + mafiaNum);
 		Game res = gameService.addGame(DAY_TIME, NIGHT_TIME, playerService.getPlayer(name), mafiaNum);
 		return res;
 	}
 	@GetMapping("/{id}")
 	public Game getGame(@PathVariable int id) {
+		LOGGER.info("getting game with id={}", id );
 		Game game = gameService.getGame(id);
 		
 		return game;
 	}
 	@GetMapping("/{id}/join")
 	public Game joinGame(@RequestHeader("name") String name, @PathVariable int id) {
-		LOGGER.trace("join game for player {" + name + "}, game id = " + id);
 		if(playerService.isFreeName(name)) {
-			throw new UnauthorizedPlayerException("not registered player with name {" + name + "}");
+			LOGGER.warn("failed to join game with id={}, player with name={} is not registered", id, name);
+			throw new UnauthorizedPlayerException("not registered player with name=" + name);
 		}
+		LOGGER.info("joining game for player name=" + name + ", game with id = " + id);
 		Player player = playerService.getPlayer(name);
 		Game game = gameService.getGame(id);
 		gameService.addPlayer(id, player);
@@ -70,10 +72,12 @@ public class GameController {
 	 * @return
 	 */
 	@GetMapping("/{id}/start")
-	public Game voteStart(@RequestHeader("name") String name, @PathVariable int id) {
+	public Game gameStart(@RequestHeader("name") String name, @PathVariable int id) {
 		if(playerService.isFreeName(name)) {
+			LOGGER.warn("failed to start game with id={}, player with name={} is not registered",id, name);
 			throw new UnauthorizedPlayerException("not registered player with name {" + name + "}");
 		}
+		LOGGER.info("starting game id={}", id);
 		Player initiator = playerService.getPlayer(name);
 		Game game = gameService.startGame(initiator, id);
 		sendGameToPlayers(game);
@@ -88,8 +92,10 @@ public class GameController {
 	@GetMapping("/{id}/stop")
 	public void stopGame(@RequestHeader("name") String name, @PathVariable int id) {
 		if(playerService.isFreeName(name)) {
+			LOGGER.warn("failed to stop game with id={}, player with name={} is not registered", id, name);
 			throw new UnauthorizedPlayerException("not registered player with name {" + name + "}");
 		}
+		LOGGER.info("stopping game with id={}", id);
 		Player initiator = playerService.getPlayer(name);
 		Game game = gameService.getGame(id);
 		gameService.stopGame(initiator, id);
@@ -100,21 +106,33 @@ public class GameController {
 	@PostMapping("/{id}/add-message")
 	public Game addMessage(@RequestHeader("name") String name, @PathVariable int id, @RequestParam String msg) {
 		if(playerService.isFreeName(name)) {
+			LOGGER.warn("failed to add message to chat game with id={}, player with name={} is not registered", id, name);
 			throw new UnauthorizedPlayerException("not registered player with name {" + name + "}");
 		}
+		LOGGER.info("adding message to chat game with id={}, player with name={}, message={}", id, name, msg);
 		Player player = playerService.getPlayer(name);
-		
 		Game game = gameService.addMessage(id, player, msg);
-		sendGameToPlayers(game);
+		
 		return game;
 	}
 	
 	@PostMapping("/{id}/vote-citizen")
 	public void voteCitizen(@RequestHeader("name") String name, @RequestParam String target, @PathVariable int id) {
 		if(playerService.isFreeName(name)) {
+			LOGGER.warn("failed to vote citizen game with id={}, player with name={} is not registered", id, name);
 			throw new UnauthorizedPlayerException("not registered player with name {" + name + "}");
 		}
+		LOGGER.info("voting citizen game with id={}, voter={}, target={},", id, name, target);
 		gameService.voteCitizen(id, playerService.getPlayer(name), playerService.getPlayer(target));
+	}
+	@PostMapping("/{id}/vote-mafia")
+	public void voteMafia(@RequestHeader("name") String name, @RequestParam String target, @PathVariable int id) {
+		if(playerService.isFreeName(name)) {
+			LOGGER.warn("failed to vote mafia game with id={}, player with name={} is not registered", id, name);
+			throw new UnauthorizedPlayerException("not registered player with name {" + name + "}");
+		}
+		LOGGER.info("voting mafia game with id={}, voter={}, target={},", id, name, target);
+		gameService.voteMafia(id, playerService.getPlayer(name), playerService.getPlayer(target));
 	}
 	private void sendGameToPlayers(Game game) {
 		messagingTemplate.convertAndSend("/chat/" + game.getId(), game);

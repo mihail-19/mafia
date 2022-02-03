@@ -41,13 +41,17 @@ public class Game {
 	}
 	
 	public synchronized void addPlayer(Player player) {
+		LOGGER.info("adding player={} into game={}", player, this);
 		if(isStarted || isFinished) {
+			LOGGER.error("game is not running game={}", this);
 			throw new IllegalArgumentException("Game already started");
 		}
 		if(player == null) {
+			LOGGER.error("trying to add null player into game={}", this);
 			throw new IllegalArgumentException("Could not add null player into game");
 		}
 		if(players.contains(player)) {
+			LOGGER.error("trying to add existing player into game, player={}, game={}", player, this);
 			throw new IllegalArgumentException("Player {" + player + "} already added into game");
 		}
 		players.add(player);
@@ -61,13 +65,16 @@ public class Game {
 	}
 	
 	public boolean killPlayerByVoteResults() {
+		LOGGER.info("killing player for vote result for game={}", this);
 		if(vote.isFinished()) {
 			Player p = vote.findChosenPlayer();
 			if(p != null) {
+				LOGGER.info("player was killed by vote results player={}, game={}", p, this);
 				p.setIsAlive(false);
 				return true;
 			}
 		}
+		LOGGER.info("No player was killed by vote results game={}", this);
 		return false;
 	}
 	
@@ -76,6 +83,7 @@ public class Game {
 		startTime = LocalTime.now();
 		isStarted = true;
 		vote = new Vote(players.size());
+		LOGGER.info("game is started, game={}", this);
 	}
 	private void setRandomRoles() {
 		int playersNum = players.size();
@@ -174,7 +182,7 @@ public class Game {
 	 * Computes period finish time according to day/night length.
 	 * @return
 	 */
-	public LocalTime finishTime() {
+	public LocalTime periodFinishTime() {
 		if (!getIsNight()) {
 			return getStartTime().plusSeconds(getDayTimeSeconds());
 		} else {
