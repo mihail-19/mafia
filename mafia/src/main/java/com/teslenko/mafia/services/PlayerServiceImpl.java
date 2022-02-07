@@ -2,13 +2,25 @@ package com.teslenko.mafia.services;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpSession;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.teslenko.mafia.entity.Player;
+import com.teslenko.mafia.entity.PlayerUserDetails;
 import com.teslenko.mafia.exception.NameBusyException;
 import com.teslenko.mafia.exception.ValidationException;
+import com.teslenko.mafia.web.GameController;
 
 /**
  * Service for mafia players.
@@ -19,11 +31,18 @@ import com.teslenko.mafia.exception.ValidationException;
  *
  */
 @Service
-public class PlayerServiceImpl implements PlayerService {
+public class PlayerServiceImpl implements PlayerService, UserDetailsService {
+	private static final Logger LOGGER = LoggerFactory.getLogger(PlayerServiceImpl.class);
+	
+	@Value("${player.inspiration.minutes}")
+	private int playerInspirationMinutes;
 	
 	@Autowired
 	private Validator validator;
 	
+	@Autowired
+	private HttpSession session;
+	public static final String SESSION_PARAM_PLAYER_NAME = "name";
 	private List<Player> players = new ArrayList<>();
 	private volatile int playersMaxId = 1;
 	
@@ -38,6 +57,7 @@ public class PlayerServiceImpl implements PlayerService {
 		Player player = new Player(name);
 		player.setId(playersMaxId++);
 		players.add(player);
+		session.setAttribute(SESSION_PARAM_PLAYER_NAME, player.getName());
 		return player;
 	}
 
@@ -63,6 +83,37 @@ public class PlayerServiceImpl implements PlayerService {
 	@Override
 	public boolean isFreeName(String name) {
 		return players.stream().noneMatch((o) -> name.equals(o.getName()));
+	}
+	
+	private boolean containsPlayerWithName(String name) {
+		try {
+			getPlayer(name);
+			return true;
+		} catch(NoSuchElementException e) {
+			return false;
+		}
+	}
+
+	@Override
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		if(session.getAttribute(SESSION_PARAM_PLAYER_NAME) == null) {
+			LOGGER.error("Name={} does not stored in session", username);
+			throw new UsernameNotFoundException("Name=" + username + " does is not stored in session") ;
+		}
+		String name = session.getAttribute(SESSION_PARAM_PLAYER_NAME).toString();
+		if(!containsPlayerWithName(name)) {
+			LOGGER.error("Name={} is invalid", username);
+			throw new UsernameNotFoundException("Name=" + username + " is invalid") ;
+		}
+		getPlayer(username).resetAcitvity();
+		return new PlayerUserDetails(name);
+	}
+
+	@Override
+	public List<Player> getEnspiredPlayers() {
+		return players.stream()
+				.filter((o) -> o.isInspired(playerInspirationMinutes))
+				.collect(Collectors.toList());
 	}
 
 }

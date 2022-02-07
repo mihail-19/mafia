@@ -1,5 +1,7 @@
 package com.teslenko.mafia.entity;
 
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public class Player {
@@ -9,9 +11,10 @@ public class Player {
 	private RoleType roleType;
 	private boolean isAlive = true;
 	private boolean isUntouchable;
-	
+	private LocalDateTime lastActivity;
 	public Player(String name) {
 		this.name = name;
+		lastActivity = LocalDateTime.now();
 	}
 
 	public int getId() {
@@ -99,5 +102,10 @@ public class Player {
 	public void setRoleType(RoleType roleType) {
 		this.roleType = roleType;
 	}
-	
+	public void resetAcitvity() {
+		lastActivity = LocalDateTime.now();
+	}
+	public boolean isInspired(int lifeTimeMinutes) {
+		return LocalDateTime.now().isAfter(lastActivity.plusMinutes(lifeTimeMinutes));
+	}
 }
