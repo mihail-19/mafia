@@ -1,5 +1,7 @@
 package com.teslenko.mafia.web;
 
+import java.security.Principal;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +47,8 @@ public class GameController {
 		return res;
 	}
 	@GetMapping("/{id}")
-	public Game getGame(@PathVariable int id) {
-		LOGGER.info("getting game with id={}", id );
+	public Game getGame(Principal user, @PathVariable int id) {
+		LOGGER.info("getting game with id={} for user={}", id, user.getName() );
 		Game game = gameService.getGame(id);
 		
 		return game;

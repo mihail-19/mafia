@@ -1,4 +1,4 @@
-package com.teslenko.mafia.entity;
+package com.teslenko.mafia.security;
 
 import org.springframework.security.core.GrantedAuthority;
 

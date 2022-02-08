@@ -27,6 +27,10 @@ public class PlayerController {
 		Player res = playerService.createPlayer(name);
 		return name;
 	}
+	@GetMapping("/test")
+	public String test() {
+		return "Hello, world";
+	}
 	@CrossOrigin
 	@GetMapping("/logout")
 	public void logout(@RequestHeader("name") String name) {

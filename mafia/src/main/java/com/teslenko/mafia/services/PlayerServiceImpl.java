@@ -1,6 +1,7 @@
 package com.teslenko.mafia.services;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -11,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -96,17 +99,20 @@ public class PlayerServiceImpl implements PlayerService, UserDetailsService {
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		LOGGER.trace("loadUserByName={}", username);
 		if(session.getAttribute(SESSION_PARAM_PLAYER_NAME) == null) {
+			
 			LOGGER.error("Name={} does not stored in session", username);
 			throw new UsernameNotFoundException("Name=" + username + " does is not stored in session") ;
+		} else {
+			String name = session.getAttribute(SESSION_PARAM_PLAYER_NAME).toString();
+			if(!containsPlayerWithName(name)) {
+				LOGGER.error("Name={} is invalid", username);
+				throw new UsernameNotFoundException("Name=" + username + " is invalid") ;
+			}
+			getPlayer(name).resetAcitvity();
+			return new PlayerUserDetails(name);
 		}
-		String name = session.getAttribute(SESSION_PARAM_PLAYER_NAME).toString();
-		if(!containsPlayerWithName(name)) {
-			LOGGER.error("Name={} is invalid", username);
-			throw new UsernameNotFoundException("Name=" + username + " is invalid") ;
-		}
-		getPlayer(username).resetAcitvity();
-		return new PlayerUserDetails(name);
 	}
 
 	@Override

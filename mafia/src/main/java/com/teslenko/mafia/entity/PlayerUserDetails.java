@@ -7,6 +7,8 @@ import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.teslenko.mafia.security.MafiaGrantedAuthority;
+
 public class PlayerUserDetails implements UserDetails{
 	private String name;
 	public PlayerUserDetails(String name) {
@@ -32,19 +34,19 @@ public class PlayerUserDetails implements UserDetails{
 	@Override
 	public boolean isAccountNonExpired() {
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
 	public boolean isAccountNonLocked() {
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
 	public boolean isCredentialsNonExpired() {
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
