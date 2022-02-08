@@ -48,9 +48,12 @@ export class AppComponent {
 
 	login() {
 		this.authService.login(this.name).subscribe((o) =>{
-			 localStorage.setItem('name', o);
+			 
 			this.isAuthorized = true;
-			this.name = o;
+			this.authService.getName().subscribe((n) =>{
+				localStorage.setItem('name', n);
+				this.name = n;
+			});
 		});
 	}
 	logout() {

@@ -1,5 +1,7 @@
 package com.teslenko.mafia.security;
 
+import java.util.stream.Collectors;
+
 import javax.servlet.Filter;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,20 +16,23 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.teslenko.mafia.MyAuthPoint;
+import com.teslenko.mafia.services.PlayerService;
 
 
 @Configuration
 @EnableConfigurationProperties
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	@Autowired
-	private UserDetailsService playerService;
+	private PlayerService playerService;
 	@Autowired
 	private MyAuthPoint authPoint;
 	
@@ -36,33 +41,24 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		http.cors().and().csrf().disable()
 		.authorizeRequests()
 		.antMatchers( "/").permitAll()
-		.antMatchers("/login").permitAll()
+		.antMatchers("/login", "/test", "/player-name").permitAll()
 		.anyRequest().authenticated()
-		.and().apply(new AuthConfigurer());
+		.and()
+		.formLogin()
+		.loginPage("/login").permitAll()
+		.loginProcessingUrl("/login-process").permitAll()
+		.defaultSuccessUrl("/player-name").permitAll();
 
 		
-	}
-	@Override
-	public void configure(WebSecurity web) throws Exception {
-	    web.ignoring().antMatchers("/login");
-	}
-	@Bean
-	@Override
-	public AuthenticationManager authenticationManagerBean() throws Exception {
-		// TODO Auto-generated method stub
-		return super.authenticationManagerBean();
 	}
 	@Bean 
 	public PasswordEncoder getPasswordEncoder() {
 		return NoOpPasswordEncoder.getInstance();
 	}
 	
-	@Bean
-	protected DaoAuthenticationProvider daoAuthenticationProvider() {
-		DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider();
-		daoProvider.setPasswordEncoder(getPasswordEncoder());
-		daoProvider.setUserDetailsService(playerService);
-		return daoProvider;
-		
-	}
+//	@Bean
+//	@Override
+//	protected UserDetailsService userDetailsService() {
+//		return (UserDetailsService) playerService;
+//	}
 }

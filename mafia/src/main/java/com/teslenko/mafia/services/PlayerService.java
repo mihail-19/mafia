@@ -5,6 +5,7 @@ import java.util.List;
 import com.teslenko.mafia.entity.Player;
 
 public interface PlayerService {
+	List<Player> getAll();
 	Player createPlayer(String name);
 	Player getPlayer(String name);
 	Player getPlayer(int id);

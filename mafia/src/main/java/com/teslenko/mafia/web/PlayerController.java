@@ -1,5 +1,7 @@
 package com.teslenko.mafia.web;
 
+import java.security.Principal;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,14 @@ public class PlayerController {
 		if(!playerService.isFreeName(name)) {
 			playerService.remove(playerService.getPlayer(name).getId());
 		}
+	}
+	@CrossOrigin
+	@GetMapping("/player-name")
+	public String getPlayerName(Principal principal) {
+		if(principal == null) {
+			return "";
+		}
+		return principal.getName(); 
 	}
 	@CrossOrigin
 	@PostMapping("/check-existance")
