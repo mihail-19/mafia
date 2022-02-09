@@ -5,13 +5,14 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { FormsModule } from '@angular/forms';
 import { Injectable } from '@angular/core';
+import {AuthService} from '../services/auth.service';
 @Injectable()
 export class XhrInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler) {
-    const xhr = req.clone({
-      headers: req.headers.set('X-Requested-With', 'XMLHttpRequest')
-    });
+    const xhr = req.clone(
+     {withCredentials: true}
+    );
     return next.handle(xhr);
   }
 }
@@ -25,7 +26,7 @@ export class XhrInterceptor implements HttpInterceptor {
 	HttpClientModule,
 	FormsModule
   ],
-  providers: [{ provide: HTTP_INTERCEPTORS, useClass: XhrInterceptor, multi: true }],
+  providers: [AuthService, { provide: HTTP_INTERCEPTORS, useClass: XhrInterceptor, multi: true }],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -18,7 +18,8 @@ public class DemoApplication {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				 registry.addMapping("/**")
-	                .allowedMethods("*");
+	                .allowedMethods("*").allowCredentials(true)
+	                .allowedOrigins("http://localhost:4200");
 			}
 		};
 	}

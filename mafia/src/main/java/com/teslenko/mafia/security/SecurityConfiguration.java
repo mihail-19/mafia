@@ -9,6 +9,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -23,6 +24,7 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 
 import com.teslenko.mafia.MyAuthPoint;
 import com.teslenko.mafia.services.PlayerService;
@@ -35,7 +37,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	private PlayerService playerService;
 	@Autowired
 	private MyAuthPoint authPoint;
-	
+	@Autowired
+	private PlayerLogoutHandler logoutHandler;
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.cors().and().csrf().disable()
@@ -47,7 +50,15 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		.formLogin()
 		.loginPage("/login").permitAll()
 		.loginProcessingUrl("/login-process").permitAll()
-		.defaultSuccessUrl("/player-name").permitAll();
+		.defaultSuccessUrl("/player-name").permitAll()
+		.and()
+		.logout()
+			.logoutUrl("/logout")
+			.clearAuthentication(true)
+			.invalidateHttpSession(true)
+			.deleteCookies("JSESSIONID")
+			.addLogoutHandler(logoutHandler)
+			.logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK));
 
 		
 	}

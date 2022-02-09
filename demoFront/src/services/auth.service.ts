@@ -19,17 +19,10 @@ export class AuthService {
 		return this.http.get<string>(`${this.url}/player-name`, { responseType:  'text' as 'json'});
 	}
 	
-	logout(): Observable<any>{
+	logout(): Observable<string>{
 		console.log('logout service');
-		var name = localStorage.getItem('name');
-		localStorage.removeItem('name');
-		if(name){
-			var headers = new HttpHeaders().set('name', name);
-			return this.http.get(`${this.url}/logout`, {'headers': headers});
-		} else {
-			
-			return this.http.get(`${this.url}/logout`);
-		}
+		
+		return this.http.get<string>(`${this.url}/logout`);
 		
 	}
 }

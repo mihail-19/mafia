@@ -58,12 +58,15 @@ export class AppComponent {
 	}
 	logout() {
 		console.log('logout app');
+		localStorage.removeItem('name');
+		this.isAuthorized = false;
 		this.authService.logout().subscribe((o) => {
 			this.isAuthorized = false;
 			this.gameId = -1;
 			this.isGameCreated = false;
 			this.isGameStarted = false;
 			this.game = undefined;
+			
 			localStorage.removeItem('gameId');
 		});
 	}

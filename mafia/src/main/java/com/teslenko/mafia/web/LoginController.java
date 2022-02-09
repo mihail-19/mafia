@@ -3,8 +3,9 @@ package com.teslenko.mafia.web;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 @RequestMapping("/")
 public class LoginController {
 
@@ -12,5 +13,10 @@ public class LoginController {
 	public String login() {
 		return "login";
 	}
+	@GetMapping("/logout-success")
+	public String logoutSuccess() {
+		return "logout";
+	}
+	
 }
 	
