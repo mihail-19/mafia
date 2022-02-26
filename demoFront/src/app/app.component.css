@@ -1,10 +1,40 @@
-.mafia-header {
-	background-color: gray;
-	height: 80px;
+.mafia-container{
 	display: flex;
-	justify-content: flex-end;
+	flex-direction: column;
+	height: 100%;
+}
+.mafia-header {
+//background-color: gray;
+	height: 70px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 5px 10px;
+	text-shadow: 3px 8px 4px #264620, 0px 1px 3px #723e73;
 }
 
+.mafia-header__background{
+	background-color: #0c1c0d;
+	opacity: 40%;
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 85px;
+	width: 100%;
+	z-index: -15; 
+}
+.mafia-header__logo{
+	font-family: 'Praise', cursive;
+	font-size: 36px;
+	font-weight: bold;
+	color: #8b0202;
+	padding: 0 0 0 20px;
+}
+.mafia-header__title{
+	font-size: 28px;
+	font-weight: bold;
+	
+}
 .mafia-header_login {
 	display: flex;
 	justify-content: center;
@@ -32,10 +62,10 @@
 
 .mafia {
 	margin: 0 auto;
-	width: 1200px;
-	padding: 20px;
+	width: 100%;
+	padding: 5px 0px;
 	font-size: 20px;
-	height: 800px;
+	flex-grow: 1;
 }
 
 .game-prepare {
@@ -73,11 +103,122 @@
 }
 
 .game-field {
-	border-top: 1px solid gray;
-	height: 100%;
+	padding: 10px;
+		display: flex;
+		height: 95%;
 }
 
-.game-field__header {
+.players {
+	background-color: #1a260c;
+	width: 500px;
+	padding: 3px 0 0 0;
+	opacity: 95%;
+}
+
+.players__player {
+	position: relative;
+	border-bottom: 3px solid #525252;
+    padding: 5px 15px 10px 20px;
+    background-color: #0b1205;
+    color: #ab6964;
+}
+.players__player:hover{
+	background-color: #122009;
+}
+.players__vote-results{
+	color: white;
+	opacity: 60%;
+	font-size: 14px;
+	text-align: right;
+}
+.players__player-name {
+	font-size: 1.2em;
+	font-weight: bold;
+	padding: 10px 0 15px 0;
+}
+
+.players__player-menu {
+	padding: 10px 0 0 0;
+	display: flex;
+	justify-content: space-between;
+}
+
+.players__is-alive {
+	color: green;
+}
+
+.players__is-dead {
+	color: gray;
+}
+
+.players__vote-button{
+	padding: 5px;
+	background-color: red;
+	color: white;
+	cursor: pointer;
+	font-size: 16px;
+}
+.players__vote-button:hover{
+	background-color: #ce0000;
+}
+
+.game-field__main{
+	flex-basis: 800px;
+	margin-left: 40px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+.game-field__actions{
+	display: flex;
+    border: 2px solid #b58b8b;
+    min-height: 80px;
+    flex-basis: 20%;
+    position: relative;
+    color: black;
+    padding: 10px;
+}
+.game-field__time-container{
+	width: 100%;
+	display: flex;
+	height: 50px;
+	align-items: center;
+	padding: 5px;
+}
+.game-filed__timing{
+	padding: 5px;
+	font-size: 24px;
+}
+.game-filed__timing_night{
+	background-color: black;
+	color: gray;
+}
+.game-filed__timing_day{
+	background-color: #bdbd00;
+	color: black;
+}
+.game-filed__timer{
+	border: 1px solid gray;
+	padding: 3px;
+	margin-left: 15px;
+}
+
+.game-field__chat{
+	height: 500px;
+	position: relative;
+}
+.game-field__background{
+	background-color: #c3d1c4;
+    opacity: 70%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    z-index: -15;
+}
+
+.game-header {
 	text-align: center;
 	padding: 10px;
 	font-weight: bold;
@@ -90,7 +231,8 @@
 	justify-content: center;
 	align-items: center;
 }
-.game-field__start-button{
+
+.game-field__start-button {
 	padding: 5px;
 	background-color: green;
 	border-radius: 10px;
@@ -98,13 +240,15 @@
 	margin-right: 10px;
 	cursor: pointer;
 }
-.game-field__stop-button{
+
+.game-field__stop-button {
 	padding: 5px;
 	background-color: red;
 	border-radius: 10px;
 	height: 30px;
 	cursor: pointer;
 }
+
 .game-field__middle {
 	display: flex;
 	justify-content: center;
@@ -139,32 +283,31 @@
 	border: 1px solid black;
 	margin: 20px;
 }
-.game-field__player-img{
+
+.game-field__player-img {
 	width: 100%;
 	height: 100%;
 }
-.game-field__player-img img{
+
+.game-field__player-img img {
 	width: 100%;
 	height: 100%;
 	object-fit: fill;
 }
 
-
-
 .chat {
 	display: flex;
 	flex-direction: column;
 	height: 90%;
-	font-size: 14px;
-	overflow: auto; 
-	overflow-x : hidden;
+	font-size: 18px;
+	overflow: auto;
+	overflow-x: hidden;
 }
 
 .chat__messages {
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
-	
 	width: 90%;
 	padding: 15px;
 }

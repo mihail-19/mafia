@@ -16,6 +16,12 @@ html,body{
 	webkit-text-size-adjust: 100%;
 }
 
+body{
+	background-image: url("/assets/images/main-image.jpg");
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
 .cursor-cross{
 	cursor: crosshair;
 }

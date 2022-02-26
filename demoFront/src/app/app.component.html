@@ -1,4 +1,19 @@
+<div class="mafia-container">
 <div class="mafia-header">
+	<div class="mafia-header__background"></div>
+	<div class="mafia-header__logo">
+		MAFIA
+	</div>
+	
+	<div class="mafia-header__title">
+		<span *ngIf="!isAuthorized">Выберите никнейм</span>
+		<span *ngIf="game">
+			Игра №{{gameId}}, создатель игры: {{game!.creator?.name}}
+			<button class="game-field__start-button" *ngIf="game!.creator?.name == name && !game!.isStarted" (click)="startGame()">Начать!</button>
+				<button class="game-field__stop-button" *ngIf="game!.creator?.name == name" (click)="stopGame()">Закончить</button>
+		</span>
+	</div>
+	
 	<div class="mafia-header_login" *ngIf="!isAuthorized">
 			<input [(ngModel)]="name"  id="name" >
 			<button class="mafia-header__login-button" (click)="login()">Войти</button>
@@ -8,7 +23,7 @@
 			<button class="mafia-header__login-button" (click)="logout()">Выйти</button>
 	</div>
 </div>
-<h1 *ngIf="!isAuthorized">Это игра мафия)</h1>
+
 <h1 class="authorize-note" *ngIf="!isAuthorized">Вы не вошли, введите имя пользователя чтобы начать</h1>
 <div class="mafia" *ngIf="isAuthorized">
 	<div class="game-prepare" *ngIf="!game">
@@ -21,34 +36,38 @@
 			<button (click)="joinGame()">Присоединиться</button>
 		</div>
 	</div>
+	
 	<div class="game-field" *ngIf="game">
-		<div class="game-field__header">
-			Игра №{{gameId}}, создатель игры: {{game!.creator?.name}}
-		</div>
-		<div class="game-field__top">
-			<button class="game-field__start-button" *ngIf="game!.creator?.name == name && !game!.isStarted" (click)="startGame()">Начать!</button>
-			<button class="game-field__stop-button" *ngIf="game!.creator?.name == name" (click)="stopGame()">Закончить</button>
-			<div *ngIf="game!.isNight">Ночь</div>
-			<div *ngIf="!game!.isNight">День</div>
-			<div *ngIf="game!.isStarted && !game!.vote.isStarted">{{timerValue}}</div>
-		</div>
-		<div class="game-field__middle">
-			<div class="game-field__players">
-				<div class="game-field__player-left-block" *ngFor="let p of game?.players">
-					<div class="game-field__player-name"><span *ngIf="p.name == name">(я) </span>{{p.name}}</div>
-					<div class="game-field__player " [ngClass]="{'cursor-cross' : p.name != name && !game!.isNight && game.isStarted}" (click)="voteCitizen(p.name)" >
-						<div class="game-field__player-img" *ngIf="p.name != name">
-							<img *ngIf="p.isAlive" src="/assets/images/unknown.png">
-							<img *ngIf="!p.isAlive" src="/assets/images/gameover.png">
-						</div>
-						<div class="game-field__player-img" *ngIf="p.name == name">
-							<img *ngIf="p.roleType == 'CITIZEN'" src="/assets/images/worker.jpg">
-							<img *ngIf="p.roleType == 'MAFIA'" src="/assets/images/mafia.jpg">
-						</div>
+		<div class="players">
+			<div class="players__player"  *ngFor="let p of game?.players">
+				<div class="players__vote-results">Голос против -> віацуа цуацу</div>
+				<div class="players__player-name"><span *ngIf="p.name == name">(я) </span>{{p.name}}</div>
+				<div class="players__player-menu">
+					<div class="players__is-alive" *ngIf="p.isAlive">Жив</div>
+					<div class="players__is-dead" *ngIf="!p.isAlive">Мертв</div>
+					<div class="players__role" *ngIf="p.name == name">
+						<span *ngIf="p.roleType == 'CITIZEN'">Горожанин</span>
+						<span *ngIf="p.roleType == 'MAFIA'">Мафия</span>
+					</div>
+					<div class="players__vote-action">
+						<button class="players__vote-button" *ngIf="game!.vote && game!.vote.isStarted" (click)="voteCitizen(p.name)">Казнить</button>
 					</div>
 				</div>
 			</div>
-			<div class="game-field__table">
+		</div>
+		
+		<div class="game-field__main">
+			<div class="game-field__actions">
+				<div class="game-field__background"></div>
+				<div class="game-field__time-container" [ngClass]="{'game-filed__timing_night': game!.isNight, 'game-filed__timing_day': !game!.isNight}">
+					<div *ngIf="game!.isNight" >Ночь: </div>
+					<div *ngIf="!game!.isNight" >День: </div>
+					<div *ngIf="game!.isStarted && !game!.vote.isStarted" class="game-filed__timer"> {{timerValue}}</div>
+				</div>
+			</div>
+			
+			<div class="game-field__chat">
+				<div class="game-field__background"></div>
 				<div class="chat">
 					<div class="chat__messages">
 						<div class="chat__message" *ngFor="let msg of game!.chat.messages">
@@ -63,18 +82,7 @@
 						<button (click)="sendMsg()" class="chat__send-button">Отправить</button>
 					</div>
 			</div>
-			<div class="game-field__players">
-				<div class="game-field__vote" *ngIf="game!.vote && game!.vote.isStarted">
-					<h2>Голосование</h2>
-					<div class="game-field__vote-row" *ngFor="let v of game!.vote.voteMap">
-						{{v.voter.name}} -> {{v.target.name}}
-					</div>
-				</div>
-			</div>
 		</div>
-		<div class="game-field__bottom">
-		
-		</div>
-	</div>
+</div>
 </div>
 <router-outlet></router-outlet>

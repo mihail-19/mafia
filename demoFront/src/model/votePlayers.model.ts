@@ -3,5 +3,6 @@ export class VotePlayers {
 	 voter = new Player();
 	 target = new Player();
   constructor() { }
-
+	
+	
 }

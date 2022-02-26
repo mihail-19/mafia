@@ -9,5 +9,11 @@ export class Vote {
 	constructor() {
 		this.voteMap = [];
 	}
-
+	getTargetForVoter(voter: Player): Player{
+		var vp =  this.voteMap.find(o => o.voter == voter);
+		if(vp === undefined){
+			return new Player();
+		}
+		return vp.target;
+	}
 }
