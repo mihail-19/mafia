@@ -26,7 +26,6 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 
-import com.teslenko.mafia.MyAuthPoint;
 import com.teslenko.mafia.services.PlayerService;
 
 
@@ -35,8 +34,6 @@ import com.teslenko.mafia.services.PlayerService;
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private PlayerService playerService;
-	@Autowired
-	private MyAuthPoint authPoint;
 	@Autowired
 	private PlayerLogoutHandler logoutHandler;
 	@Override

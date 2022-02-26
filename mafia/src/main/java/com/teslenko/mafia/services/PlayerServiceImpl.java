@@ -1,7 +1,6 @@
 package com.teslenko.mafia.services;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -12,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,10 +20,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.teslenko.mafia.entity.Player;
-import com.teslenko.mafia.entity.PlayerUserDetails;
 import com.teslenko.mafia.exception.NameBusyException;
 import com.teslenko.mafia.exception.ValidationException;
-import com.teslenko.mafia.web.GameController;
 
 /**
  * Service for mafia players. Stores data in {@link List}. Name should be
@@ -83,21 +81,16 @@ public class PlayerServiceImpl implements PlayerService, UserDetailsService {
 		return players.stream().noneMatch((o) -> name.equals(o.getName()));
 	}
 
-	private boolean containsPlayerWithName(String name) {
-		try {
-			getPlayer(name);
-			return true;
-		} catch (NoSuchElementException e) {
-			return false;
-		}
-	}
 
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		LOGGER.trace("loadUserByName={}", username);
 		createPlayer(username);
 		getPlayer(username).resetAcitvity();
-		return new PlayerUserDetails(username);
+		List<GrantedAuthority> auths = new ArrayList<>();
+		auths.add(new SimpleGrantedAuthority("USER"));
+		User user = new User(username, "", auths);
+		return user;
 	}
 
 	@Override
