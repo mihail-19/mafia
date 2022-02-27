@@ -12,9 +12,11 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.teslenko.mafia.entity.Game;
+import com.teslenko.mafia.entity.GameBuilder;
 import com.teslenko.mafia.entity.Message;
 import com.teslenko.mafia.entity.Player;
 import com.teslenko.mafia.entity.RoleType;
+import com.teslenko.mafia.exception.IllegalMafiaRoleActionException;
 import com.teslenko.mafia.exception.NameBusyException;
 import com.teslenko.mafia.exception.UnauthorizedPlayerException;
 import com.teslenko.mafia.exception.VoteException;
@@ -30,8 +32,15 @@ public class GameServiceImpl implements GameService {
 
 	@Override
 	public synchronized Game addGame(int dayTimeSeconds, int nightTimeSeconds, Player creator, int mafiaNum) {
-		Game game = new Game(maxId++, dayTimeSeconds, nightTimeSeconds, creator, mafiaNum);
+		Game game = new GameBuilder(messagingTemplate)
+				.id(maxId)
+				.dayTimeSeconds(dayTimeSeconds)
+				.nightTimeSeconds(nightTimeSeconds)
+				.creator(creator)
+				.mafiaNum(mafiaNum)
+				.create();
 		games.add(game);
+		maxId++;
 		game.addPlayer(creator);
 		LOGGER.info("Game is created game={}", game);
 		return game;
@@ -52,7 +61,6 @@ public class GameServiceImpl implements GameService {
 		Game game = getGame(id);
 		if (game.getCreator().equals(initiator)) {
 			game.startGame();
-			turnToDay(game);
 		} else {
 			throw new UnauthorizedPlayerException(
 					"Player {" + initiator.getName() + "} is not creator for game {" + id + "}");
@@ -76,6 +84,7 @@ public class GameServiceImpl implements GameService {
 				p.setRoleType(null);
 				p.setUntouchable(false);
 			}
+			game.sendGame();
 			games.removeIf((o) -> o.getId() == id);
 		}
 	}
@@ -98,68 +107,17 @@ public class GameServiceImpl implements GameService {
 	public Game addMessage(int id, Player player, String msg) {
 		LOGGER.info("adding message to game with id={}, by player={}, msg={}", id, player, msg);
 		Game game = getGame(id);
+		if(game.getIsNight() && player.getRoleType() != RoleType.MAFIA) {
+			LOGGER.warn("could not add message {} to chat at night for citizen player {}, game {}", msg, player, game);
+			throw new IllegalMafiaRoleActionException("could not add message to chat at night for citizen player");
+		}
 		if (game.hasPlayer(player)) {
 			game.getChat().addMessage(new Message(player.getName(), msg));
+			game.sendGame();
 		}
-		sendGameToPlayers(game);
 		return game;
 	}
 	
-	/**
-	 * Method for switching day and night in game. Uses another Thread.
-	 * @param game
-	 */
-	public void turnToDay(Game game) {
-		game.setIsNight(false);
-		game.setStartTime(LocalTime.now());
-		new Thread(() -> {
-			LOGGER.debug("starting separate thread for game={}, thread={}", game, Thread.currentThread().getName());
-			while (!game.getIsFinished()) {
-				LocalTime finishTime = game.periodFinishTime();
-				while (LocalTime.now().isBefore(finishTime)) {
-					sleepWithPeriod(100);
-				}
-				if (!game.getIsNight()) {
-					startVoteCitizen(game);
-				}else {
-					startVoteMafia(game);
-				}
-				game.setStartTime(LocalTime.now());
-				sendGameToPlayers(game);
-			}
-		}).start();
-	}
-	private void startVoteCitizen(Game game) {
-		LOGGER.info("starting citizen vote for game={} ", game);
-		game.resetVoteCitizen();
-		game.getVote().startVote();
-		sendGameToPlayers(game);
-		while(!game.getVote().isFinished()) {
-			sleepWithPeriod(100);
-		}
-		game.killPlayerByVoteResults();
-		game.setIsNight(true);
-		LOGGER.debug("citizen vote is finished, game={}", game);
-	}
-	private void startVoteMafia(Game game) {
-		LOGGER.info("starting mafia vote for game={} ", game);
-		game.resetVoteMafia();
-		game.getVote().startVote();
-		sendGameToPlayers(game);
-		while(!game.getVote().isFinished()) {
-			sleepWithPeriod(100);
-		}
-		game.killPlayerByVoteResults();
-		game.setIsNight(true);
-		LOGGER.debug("mafia vote is finished, game={}", game);
-	}
-	private void sleepWithPeriod(int delay) {
-		try {
-			Thread.sleep(delay);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
 	@Override
 	public void voteCitizen(int id, Player voter, Player target) {
 		Game game = getGame(id);
@@ -214,7 +172,6 @@ public class GameServiceImpl implements GameService {
 	}
 	
 	private void sendGameToPlayers(Game game) {
-		LOGGER.trace("sending game to players, game={}", game);
-		messagingTemplate.convertAndSend("/chat/" + game.getId(), game);
+		game.sendGame();
 	}
 }

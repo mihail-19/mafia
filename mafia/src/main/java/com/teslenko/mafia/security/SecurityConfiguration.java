@@ -47,6 +47,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		.formLogin()
 		.loginPage("/login").permitAll()
 		.loginProcessingUrl("/login-process").permitAll()
+		.failureHandler(new MafiaAuthienticationFailureHandler())
 		.defaultSuccessUrl("/player-name").permitAll()
 		.and()
 		.logout()

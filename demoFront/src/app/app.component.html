@@ -40,46 +40,66 @@
 	<div class="game-field" *ngIf="game">
 		<div class="players">
 			<div class="players__player"  *ngFor="let p of game?.players">
-				<div class="players__vote-results">Голос против -> віацуа цуацу</div>
+				<div class="players__vote-results"><span *ngIf="game!.vote && game!.vote.isStarted && !game!.vote.isFinished && getTargetNameForVoter(p, game!.vote.voteMap).length > 0">Голос против  {{getTargetNameForVoter(p, game!.vote.voteMap)}}</span></div>
 				<div class="players__player-name"><span *ngIf="p.name == name">(я) </span>{{p.name}}</div>
 				<div class="players__player-menu">
 					<div class="players__is-alive" *ngIf="p.isAlive">Жив</div>
 					<div class="players__is-dead" *ngIf="!p.isAlive">Мертв</div>
-					<div class="players__role" *ngIf="p.name == name">
+					<div class="players__role" *ngIf="!p.isAlive || p.name == name || getMyRole() === 'MAFIA'">
 						<span *ngIf="p.roleType == 'CITIZEN'">Горожанин</span>
 						<span *ngIf="p.roleType == 'MAFIA'">Мафия</span>
 					</div>
 					<div class="players__vote-action">
-						<button class="players__vote-button" *ngIf="game!.vote && game!.vote.isStarted" (click)="voteCitizen(p.name)">Казнить</button>
+						<button class="players__vote-button" *ngIf="p.name != name && p.isAlive && !game!.isNight && game!.vote && game!.vote.isStarted && !game!.vote.isFinished" (click)="voteCitizen(p.name)">Казнить</button>
+						<button class="players__vote-button" *ngIf="p.name != name && p.isAlive && game!.isNight && getMyRole() == 'MAFIA' && p.roleType == 'CITIZEN' && game!.vote && game!.vote.isStarted && !game!.vote.isFinished" (click)="voteMafia(p.name)">Убить</button>
 					</div>
 				</div>
 			</div>
 		</div>
 		
 		<div class="game-field__main">
-			<div class="game-field__actions">
-				<div class="game-field__background"></div>
-				<div class="game-field__time-container" [ngClass]="{'game-filed__timing_night': game!.isNight, 'game-filed__timing_day': !game!.isNight}">
+			<div class="game-field__actions" [ngClass]="{'game-filed__timing_night': game!.isNight, 'game-filed__timing_day': !game!.isNight}">
+				<div class="game-field__background" [ngClass]="{'game-field__background_day': !game!.isNight, 'game-field__background_night': game!.isNight}"></div>
+				<div class="game-field__actions-row" >
 					<div *ngIf="game!.isNight" >Ночь: </div>
 					<div *ngIf="!game!.isNight" >День: </div>
-					<div *ngIf="game!.isStarted && !game!.vote.isStarted" class="game-filed__timer"> {{timerValue}}</div>
+					<div *ngIf="game!.isStarted " class="game-filed__timer"> {{timerValue}}</div>
+					
+				</div>
+				<div class="game-field__actions-row">
+					<div *ngIf="game!.isNight && game!.isStarted && game!.vote.isStarted && !game!.vote.isFinished"> Голосование мафии: </div>
+					<div *ngIf="!game!.isNight && game!.isStarted && game!.vote.isStarted && !game!.vote.isFinished"> Голосование горожан: </div>
+					<div class="game-filed__timer" *ngIf="game!.isStarted && game!.vote.isStarted && !game!.vote.isFinished">{{timerVoteValue}}</div>
+				</div>
+				<div class="game-field__actions-row game-field__actions-row_prompt">
+					<div *ngIf="game!.isNight && (!game!.vote || !game!.vote.isStarted || game!.vote.isFinished)">
+						Город засыпает, просыпается мафия. Только мафия может общаться в чате.
+					</div>
+					<div *ngIf="game!.isNight && (game!.vote && game!.vote.isStarted && !game!.vote.isFinished)">
+						Мафия выбирает жертву большинством голосов.
+					</div>
+					<div *ngIf="!game!.isNight && (!game!.vote || !game!.vote.isStarted || game!.vote.isFinished)">
+						День - все могут общаться в чате. Горожане пытаются вычислить мафию.
+					</div>
+					<div *ngIf="!game!.isNight && (game!.vote && game!.vote.isStarted && !game!.vote.isFinished)">
+						Голосование горожан: большинством голосов быберите преступника. 
+					</div>
 				</div>
 			</div>
 			
 			<div class="game-field__chat">
-				<div class="game-field__background"></div>
+				<div class="game-field__background" [ngClass]="{'game-field__background_day': !game!.isNight, 'game-field__background_night': game!.isNight}"></div>
 				<div class="chat">
 					<div class="chat__messages">
-						<div class="chat__message" *ngFor="let msg of game!.chat.messages">
+						<div class="chat__message" *ngFor="let msg of game!.chat.messages" [ngClass]="{'chat__message_night': game!.isNight}">
 							<div class="chat__author-name">[{{msg.authorName}}]: </div>
 							<div class="chat__msg-text">{{msg.msg}}</div>
 						</div>
 					</div>
-					
 				</div>
-				<div class="chat__inputs">
-						<input [(ngModel)]="message">
-						<button (click)="sendMsg()" class="chat__send-button">Отправить</button>
+				<div class="chat__inputs" *ngIf="!game!.isNight || getMyRole() == 'MAFIA'">
+						<input (keyup.enter)="sendMsg()" [(ngModel)]="message">
+						<button  (click)="sendMsg()" class="chat__send-button">Отправить</button>
 					</div>
 			</div>
 		</div>

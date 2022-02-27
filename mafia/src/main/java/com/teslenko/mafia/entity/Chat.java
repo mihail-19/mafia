@@ -1,17 +1,23 @@
 package com.teslenko.mafia.entity;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedList;
-import java.util.List;
 
 public class Chat {
 	public static final int MAX_LINES = 50;
-	private int gameId;
 	Deque<Message> messages = new LinkedList<>();
-	public Chat(int gameId) {
-		this.gameId = gameId;
+	public Chat() {
+	}
+	
+	/**
+	 * Prepares chat with greeting message. It will automatically became a first message.
+	 */
+	public void setGreetingMsg(String msg) {
+		if(messages.size() < MAX_LINES) {
+			Message greetings = new Message("~ADMIN~", msg);
+			messages.addFirst(greetings);
+		}
 	}
 	
 	/**

@@ -31,14 +31,8 @@ export class GameService {
 		}
 	}
 	getGame(id: number): Observable<Game>{
-		var name = localStorage.getItem('name');
 		let url = `${this.url}/${id}`;
-		if(name){
-			var headers = new HttpHeaders().set('name', name);
-			return this.http.get<Game>(url, {'headers': headers});
-		} else {
-			return this.http.get<Game>(url);
-		}
+		return this.http.get<Game>(url);
 	}
 	stopGame(id: number): Observable<any>{
 		var name = localStorage.getItem('name');
@@ -50,39 +44,27 @@ export class GameService {
 			return this.http.get(url);
 		}
 	}
-	startGame(id: number): Observable<Game>{
-		var name = localStorage.getItem('name');
+	startGame(id: number): Observable<any>{
 		let url = `${this.url}/${id}/start`;
-		if(name){
-			var headers = new HttpHeaders().set('name', name);
-			return this.http.get<Game>(url, {'headers': headers});
-		} else {
-			return this.http.get<Game>(url);
-		}
+		return this.http.get(url);
 	}
-	sendMessage(id: number, msg: string): Observable<Game>{
-		var name = localStorage.getItem('name');
+	sendMessage(id: number, msg: string): Observable<any>{
 		let url = `${this.url}/${id}/add-message`;
 		let params: HttpParams = new HttpParams();
 		params = params.set('msg', msg);
-		if(name){
-			var headers = new HttpHeaders().set('name', name);
-			return this.http.post<Game>(url, params, {'headers': headers});
-		} else {
-			return this.http.post<Game>(url, params);
-		}
+		return this.http.post(url, params);
 	}
 	voteCitizen(id: number, target: string): Observable<any>{
-		var name = localStorage.getItem('name');
 		let url = `${this.url}/${id}/vote-citizen`;
 		let params: HttpParams = new HttpParams();
 		params = params.set('target', target);
-		if(name){
-			var headers = new HttpHeaders().set('name', name);
-			return this.http.post<Game>(url, params,  {'headers': headers});
-		} else {
-			return this.http.post<Game>(url, params);
-		}
+		return this.http.post(url, params);
+	}
+	voteMafia(id: number, target: string): Observable<any>{
+		let url = `${this.url}/${id}/vote-mafia`;
+		let params: HttpParams = new HttpParams();
+		params = params.set('target', target);
+		return this.http.post(url, params);
 	}
 	
 }

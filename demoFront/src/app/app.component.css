@@ -170,31 +170,36 @@
 	justify-content: space-between;
 }
 .game-field__actions{
-	display: flex;
     border: 2px solid #b58b8b;
     min-height: 80px;
     flex-basis: 20%;
     position: relative;
     color: black;
     padding: 10px;
+    display: flex;
+    flex-direction: column;
 }
-.game-field__time-container{
+.game-field__actions-row{
+	flex-basis: 30%;
 	width: 100%;
 	display: flex;
-	height: 50px;
 	align-items: center;
 	padding: 5px;
 }
+.game-field__actions-row_prompt{
+	font-style: italic;	
+}
+
 .game-filed__timing{
 	padding: 5px;
 	font-size: 24px;
 }
 .game-filed__timing_night{
-	background-color: black;
-	color: gray;
+	//background-color: black;
+	color: white;
 }
 .game-filed__timing_day{
-	background-color: #bdbd00;
+	//background-color: #bdbd00;
 	color: black;
 }
 .game-filed__timer{
@@ -208,8 +213,6 @@
 	position: relative;
 }
 .game-field__background{
-	background-color: #c3d1c4;
-    opacity: 70%;
     position: absolute;
     left: 0;
     top: 0;
@@ -217,7 +220,14 @@
     width: 100%;
     z-index: -15;
 }
-
+.game-field__background_day{
+	background-color: #c3d1c4;
+	opacity: 80%;
+}
+.game-field__background_night{
+	background-color: #2e2e2e;
+	opacity: 70%;
+}
 .game-header {
 	text-align: center;
 	padding: 10px;
@@ -317,7 +327,9 @@
 	justify-content: flex-start;
 	padding: 5px 0 5px 0;
 }
-
+.chat__message_night{
+	color: white;
+}
 .chat__author-name {
 	font-weight: bold;
 }

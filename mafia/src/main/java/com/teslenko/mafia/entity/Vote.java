@@ -16,10 +16,13 @@ public class Vote {
 	private int totalPlayers;
 	private Set<VotePlayers> voteMap = new HashSet<>();
 	private boolean isStarted;
+	private boolean isFinished;
 	private LocalTime timeStart;
-	public final int voteTimeSeconds = 30;
-	public Vote (int totalPlayers) {
+	private boolean isMafiaVote;
+	public final int voteTimeSeconds = 15;
+	public Vote (int totalPlayers, boolean isMafiaVote) {
 		this.totalPlayers = totalPlayers;
+		this.isMafiaVote = isMafiaVote;
 	}
 	public void startVote() {
 		isStarted = true;
@@ -48,6 +51,7 @@ public class Vote {
 			return false;
 		}
 		if(voteMap.size() == totalPlayers || LocalTime.now().isAfter(timeStart.plusSeconds(voteTimeSeconds))) {
+			isFinished = true;
 			return true;
 		}
 		return false;
@@ -101,6 +105,26 @@ public class Vote {
 	}
 	public int getVoteTime() {
 		return voteTimeSeconds;
+	}
+	public boolean getIsFinished() {
+		return isFinished;
+	}
+	public boolean getIsMafiaVote() {
+		return isMafiaVote;
+	}
+	
+	/**
+	 * Method should be used only for DTO copying
+	 * @param isFinished
+	 */
+	public void setIsFinished(boolean isFinished) {
+		this.isFinished = isFinished;
+	}
+	public void finish() {
+		if(!isStarted) {
+			throw new IllegalStateException("Could not finish vote for it is not started");
+		}
+		this.isFinished = true;
 	}
 	@Override
 	public String toString() {
