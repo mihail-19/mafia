@@ -6,21 +6,23 @@
 	</div>
 	
 	<div class="mafia-header__title">
-		<span *ngIf="!isAuthorized">Выберите никнейм</span>
-		<span *ngIf="game">
-			Игра №{{gameId}}, создатель игры: {{game!.creator?.name}}
-			<button class="game-field__start-button" *ngIf="game!.creator?.name == name && !game!.isStarted" (click)="startGame()">Начать!</button>
-				<button class="game-field__stop-button" *ngIf="game!.creator?.name == name" (click)="stopGame()">Закончить</button>
-		</span>
+		<div *ngIf="!isAuthorized">Выберите никнейм</div>
+		<div  *ngIf="game">Игра №{{gameId}}, создатель игры: {{game!.creator?.name}}</div>
+		<button class="game-field__action-button game-field__action-button_start" *ngIf="game && game!.creator?.name == name && !game!.isStarted" (click)="startGame()">Начать!</button>
+		<button class="game-field__action-button game-field__action-button_stop" *ngIf="game && game!.creator?.name == name" (click)="stopGame()">Закончить</button>
+		<button class="game-field__action-button game-field__action-button_exit" *ngIf="game" (click)="exitGame()">Покинуть</button>
 	</div>
+	<div class="mafia-header__right" >
+		<button class="mafia-header__rules-button" (click)="showRules()">Правила</button>
+		<div class="mafia-header_login" *ngIf="!isAuthorized">
+				<input [(ngModel)]="name"  (keyup.enter)="login()" id="name" >
+				<button class="mafia-header__login-button" (click)="login()">Войти</button>
+		</div>
 	
-	<div class="mafia-header_login" *ngIf="!isAuthorized">
-			<input [(ngModel)]="name"  id="name" >
-			<button class="mafia-header__login-button" (click)="login()">Войти</button>
-	</div>
-	<div class="mafia-header_login" *ngIf="isAuthorized">
-			<div class="mafia-header__name">{{name}}</div>
-			<button class="mafia-header__login-button" (click)="logout()">Выйти</button>
+		<div class="mafia-header_login" *ngIf="isAuthorized">
+				<div class="mafia-header__name">{{name}}</div>
+				<button class="mafia-header__login-button" (click)="logout()">Выйти</button>
+		</div>
 	</div>
 </div>
 
@@ -28,13 +30,27 @@
 <div class="mafia" *ngIf="isAuthorized">
 	<div class="game-prepare" *ngIf="!game">
 		<div class="game-prepare__field">
-			Количество мафии: <input [(ngModel)]=mafiaNum>
-			<button (click)="createGame()">Начать игру</button>
+			<h2>Новая игра</h2>
+			<p>Время (секунды):</p>
+			<p> 
+				- день <input [(ngModel)]=gameParams.dayTimeSeconds>
+				- ночь <input [(ngModel)]=gameParams.nightTimeSeconds>
+				- голосование <input [(ngModel)]=gameParams.voteTimeSeconds>
+			</p>
+			<p>
+				Количество мафии: <input [(ngModel)]=gameParams.mafiaNum> 
+				<button (click)="createGame()">Начать игру</button>
+			</p>
 		</div>
 		<div class="game-prepare__field">
-			Код игры: <input [(ngModel)]=gameId>
-			<button (click)="joinGame()">Присоединиться</button>
+			<h2>Присоединиться к игре</h2>
+			<p>
+				Код игры: <input [(ngModel)]=gameId>
+				<button (click)="joinGame()">Присоединиться</button>
+				<button *ngIf="isAuthorized" (click)="showAllGames()" class="game-prepare__game-list-button">Доступные игры</button>
+			</p>
 		</div>
+		
 	</div>
 	
 	<div class="game-field" *ngIf="game">
@@ -72,13 +88,16 @@
 					<div class="game-filed__timer" *ngIf="game!.isStarted && game!.vote.isStarted && !game!.vote.isFinished">{{timerVoteValue}}</div>
 				</div>
 				<div class="game-field__actions-row game-field__actions-row_prompt">
+					<div *ngIf="!game!.isStarted">
+						Ожидание начала игры...
+					</div>
 					<div *ngIf="game!.isNight && (!game!.vote || !game!.vote.isStarted || game!.vote.isFinished)">
 						Город засыпает, просыпается мафия. Только мафия может общаться в чате.
 					</div>
 					<div *ngIf="game!.isNight && (game!.vote && game!.vote.isStarted && !game!.vote.isFinished)">
 						Мафия выбирает жертву большинством голосов.
 					</div>
-					<div *ngIf="!game!.isNight && (!game!.vote || !game!.vote.isStarted || game!.vote.isFinished)">
+					<div *ngIf="game!.isStarted && !game!.isNight && (!game!.vote || !game!.vote.isStarted || game!.vote.isFinished)">
 						День - все могут общаться в чате. Горожане пытаются вычислить мафию.
 					</div>
 					<div *ngIf="!game!.isNight && (game!.vote && game!.vote.isStarted && !game!.vote.isFinished)">

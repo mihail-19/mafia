@@ -25,6 +25,11 @@ export class AuthService {
 		
 		return this.http.get<string>(`${this.url}/logout`);
 	}
+	checkExistance(name: string): Observable<boolean>{
+		let params: HttpParams = new HttpParams();
+		params = params.set('name', name);
+		return this.http.post<boolean>(`${this.url}/check-existance`, params).pipe(catchError((e) => throwError(e.error)));
+	}
 	handleError(error: HttpErrorResponse) {
 		if (error.status === 0) {
 			// A client-side or network error occurred. Handle it accordingly.

@@ -38,26 +38,21 @@ public class PlayerServiceImpl implements PlayerService, UserDetailsService {
 	private int playerInspirationMinutes;
 
 	@Autowired
-	private Validator validator;
-
-	@Autowired
-	private HttpSession session;
-	public static final String SESSION_PARAM_PLAYER_NAME = "name";
+	private PlayerValidator playerValidator;
+	
 	private List<Player> players = new ArrayList<>();
 	private volatile int playersMaxId = 1;
 
 	@Override
 	public synchronized Player createPlayer(String name) {
+		playerValidator.validateNameOrThrow(name);
 		if (!isFreeName(name)) {
+			LOGGER.warn("player name already exists {}", name);
 			throw new NameBusyException("Name {" + name + "} already taken");
-		}
-		if (!validator.isValidPlayerName(name)) {
-			throw new ValidationException("Name {" + name + "} is not valid");
 		}
 		Player player = new Player(name);
 		player.setId(playersMaxId++);
 		players.add(player);
-		session.setAttribute(SESSION_PARAM_PLAYER_NAME, player.getName());
 		return player;
 	}
 

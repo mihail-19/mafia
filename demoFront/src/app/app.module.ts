@@ -6,6 +6,11 @@ import { AppComponent } from './app.component';
 import { FormsModule } from '@angular/forms';
 import { Injectable } from '@angular/core';
 import {AuthService} from '../services/auth.service';
+import {MatSnackBarModule} from '@angular/material/snack-bar';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { GamesComponent } from './games/games.component';
+import { MatDialogModule} from '@angular/material/dialog';
+import { RulesComponent } from './rules/rules.component';
 @Injectable()
 export class XhrInterceptor implements HttpInterceptor {
 
@@ -18,13 +23,18 @@ export class XhrInterceptor implements HttpInterceptor {
 }
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    GamesComponent,
+    RulesComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
 	HttpClientModule,
-	FormsModule
+	FormsModule,
+	MatSnackBarModule,
+	BrowserAnimationsModule,
+	MatDialogModule
   ],
   providers: [AuthService, { provide: HTTP_INTERCEPTORS, useClass: XhrInterceptor, multi: true }],
   bootstrap: [AppComponent]

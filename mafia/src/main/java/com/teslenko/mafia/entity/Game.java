@@ -245,6 +245,15 @@ public class Game {
 		gameSender.sendRequestForGameRefresh();
 	}
 	
+	/**
+	 * Removes player from game.
+	 * @param player
+	 */
+	public void removePlayer(Player player) {
+		players.removeIf((o) -> o.equals(player));
+		sendGame();
+	}
+	
 	
 	public void stopGame() {
 		isFinished = true;

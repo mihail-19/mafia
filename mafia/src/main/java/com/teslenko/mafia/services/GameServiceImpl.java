@@ -4,6 +4,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.teslenko.mafia.entity.Game;
 import com.teslenko.mafia.entity.GameBuilder;
+import com.teslenko.mafia.entity.GameCreateParams;
 import com.teslenko.mafia.entity.Message;
 import com.teslenko.mafia.entity.Player;
 import com.teslenko.mafia.entity.RoleType;
@@ -31,13 +33,13 @@ public class GameServiceImpl implements GameService {
 	private volatile int maxId = 1;
 
 	@Override
-	public synchronized Game addGame(int dayTimeSeconds, int nightTimeSeconds, Player creator, int mafiaNum) {
+	public synchronized Game addGame(GameCreateParams gameCreateParams, Player creator) {
 		Game game = new GameBuilder(messagingTemplate)
 				.id(maxId)
-				.dayTimeSeconds(dayTimeSeconds)
-				.nightTimeSeconds(nightTimeSeconds)
+				.dayTimeSeconds(gameCreateParams.getDayTimeSeconds())
+				.nightTimeSeconds(gameCreateParams.getNightTimeSeconds())
 				.creator(creator)
-				.mafiaNum(mafiaNum)
+				.mafiaNum(gameCreateParams.getMafiaNum())
 				.create();
 		games.add(game);
 		maxId++;
@@ -171,6 +173,32 @@ public class GameServiceImpl implements GameService {
 		sendGameToPlayers(game);
 	}
 	
+	@Override
+	public List<Game> getAccessibleGames() {
+		return games.stream().filter((o) -> !o.getIsStarted() && !o.getIsFinished()).collect(Collectors.toList());
+	}
+	
+	
+
+	@Override
+	public void removePlayer(int id, Player player) {
+		Game game = getGame(id);
+		game.removePlayer(player);
+		LOGGER.debug("player {} removed from game {}", player, game);
+		if(game.getPlayers().size() == 0) {
+			games.removeIf((o) -> o.getId() == id);
+			maxId--;
+			LOGGER.info("removing game {} due it has no players", game);
+		} else {
+			if(game.getCreator().equals(player)) {
+				Player newCreator = game.getPlayers().get(0);
+				game.setCreator(newCreator);
+				LOGGER.info("creator of game {} removed, changing creator to {}", game, newCreator);
+			}
+			game.sendGame();
+		}
+	}
+
 	private void sendGameToPlayers(Game game) {
 		game.sendGame();
 	}

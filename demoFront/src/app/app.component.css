@@ -30,16 +30,58 @@
 	color: #8b0202;
 	padding: 0 0 0 20px;
 }
-.mafia-header__title{
-	font-size: 28px;
-	font-weight: bold;
-	
+.game-exit-button{
+	background: none;
+    font-size: 16px;
+    border: 1px solid #797979;
+    cursor: pointer;
+    padding: 5px;
+    margin-right: 5px;
+    color: #c39696;
 }
-.mafia-header_login {
+.mafia-header__title{
+	font-weight: bold;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 5px;
+	font-size: 1.5em;
+}
+
+.game-field__action-button{
+	padding: 5px;
+	height: 30px;
+	border-radius: 10px;
+	cursor: pointer;
+}
+.game-field__action-button:hover{
+	color: #d1d1d1;
+}
+.game-field__action-button_start {
+	background-color: #80b633;
+	margin-right: 10px;
+	margin-left: 10px;
+}
+
+.game-field__action-button_stop {
+	background-color: #d04f23;
+	cursor: pointer;
+}
+.game-field__action-button_exit{
+	background-color: #9c8e5e;
+	margin-left: 10px;
+}
+.mafia-header__right {
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	padding: 10px;
+}
+.mafia-header_login{
+	padding: 5px 0;
+	border-left: 1px solid #5a5454;
+	display: flex;
+	margin-left: 15px;
 }
 
 .mafia-header__login-button {
@@ -54,10 +96,17 @@
 .mafia-header_login input {
 	height: 30px;
 }
-
+.mafia-header__rules-button{
+	background: none;
+	font-size: 18px;
+	color: #837b7b;
+	cursor: pointer;
+	border-bottom: 1px solid #837b7b;
+}
 .mafia-header__name {
 	font-size: 18px;
 	font-weight: bold;
+	padding: 5px 10px 5px 20px;
 }
 
 .mafia {
@@ -101,7 +150,10 @@
 	cursor: pointer;
 	padding: 5px;
 }
-
+.game-prepare__game-list-button{
+	background: #92b692;
+	padding: 0 5px;
+}
 .game-field {
 	padding: 10px;
 		display: flex;
@@ -242,22 +294,6 @@
 	align-items: center;
 }
 
-.game-field__start-button {
-	padding: 5px;
-	background-color: green;
-	border-radius: 10px;
-	height: 30px;
-	margin-right: 10px;
-	cursor: pointer;
-}
-
-.game-field__stop-button {
-	padding: 5px;
-	background-color: red;
-	border-radius: 10px;
-	height: 30px;
-	cursor: pointer;
-}
 
 .game-field__middle {
 	display: flex;

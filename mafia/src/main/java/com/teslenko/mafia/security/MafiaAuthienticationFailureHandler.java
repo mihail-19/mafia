@@ -23,7 +23,7 @@ public class MafiaAuthienticationFailureHandler implements AuthenticationFailure
 		response.setStatus(HttpStatus.UNAUTHORIZED.value());
 		Map<String, String> body = new HashMap<>();
 		body.put("error", "name is already taken");
-		response.getOutputStream().println("name is already taken");
+		response.getOutputStream().println(exception.getMessage());
 	}	
 
 }

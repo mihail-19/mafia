@@ -16,19 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.teslenko.mafia.entity.Player;
 import com.teslenko.mafia.services.PlayerService;
+import com.teslenko.mafia.services.PlayerValidator;
 
 @RestController
 public class PlayerController {
 	private static final Logger LOGGER = LoggerFactory.getLogger(PlayerController.class);
 	@Autowired
 	private PlayerService playerService;
-	@CrossOrigin
-	@PostMapping("/login")
-	public String add(@RequestParam String name) {
-		LOGGER.info("registering player with name={}", name);
-		Player res = playerService.createPlayer(name);
-		return name;
-	}
+	
 	@GetMapping("/test")
 	public String test() {
 		return "Hello, world";

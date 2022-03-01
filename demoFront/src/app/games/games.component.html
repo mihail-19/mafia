@@ -1,0 +1,8 @@
+<h1 mat-dialog-title>Список доступных игр:</h1>
+<div mat-dialog-content class="games-list">
+	<div class="games-list__game" *ngFor="let g of games" >
+		<div class="games-list__field">ID: {{g.id}}</div>
+		<div class="games-list__field"> Создатель: {{g.creator?.name}}</div>
+		<button (click)="joinGame(g.id)" mat-dialog-close>Присоединиться</button>
+	</div>
+</div>

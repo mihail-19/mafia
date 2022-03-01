@@ -1,6 +1,7 @@
 package com.teslenko.mafia.web;
 
 import java.security.Principal;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.SessionAttributes;
 
 import com.teslenko.mafia.dto.GameDto;
 import com.teslenko.mafia.entity.Game;
+import com.teslenko.mafia.entity.GameCreateParams;
 import com.teslenko.mafia.entity.Player;
 import com.teslenko.mafia.exception.UnauthorizedPlayerException;
 import com.teslenko.mafia.services.GameService;
@@ -26,8 +28,6 @@ import com.teslenko.mafia.services.PlayerService;
 @RestController
 @RequestMapping("/game")
 public class GameController {
-	public static final int DAY_TIME = 10;
-	public static final int NIGHT_TIME = 10;
 	private static final Logger LOGGER = LoggerFactory.getLogger(GameController.class);
 	@Autowired
 	private GameService gameService;
@@ -37,10 +37,19 @@ public class GameController {
 	private SimpMessagingTemplate messagingTemplate;
 	
 	@PostMapping("/create")
-	public Game createGame(@RequestParam int mafiaNum, Principal principal) {
+	public Game createGame(@RequestParam(required = false) Integer dayTimeSeconds,
+			@RequestParam(required = false) Integer nightTimeSeconds, 
+			@RequestParam(required = false) Integer voteTimeSeconds, 
+			@RequestParam(required = false) Integer mafiaNum, Principal principal) {
 		String name = principal.getName();
-		LOGGER.info("creating game for player {" + name + "}, mafia num = " + mafiaNum);
-		Game res = gameService.addGame(DAY_TIME, NIGHT_TIME, playerService.getPlayer(name), mafiaNum);
+		GameCreateParams gameCreateParams = GameCreateParams.builder()
+				.dayTimeSeconds(dayTimeSeconds)
+				.nightTimeSeconds(nightTimeSeconds)
+				.voteTimeSeconds(voteTimeSeconds)
+				.mafiaNum(mafiaNum)
+				.build();
+		LOGGER.info("creating game for player {}, mafiaNum {}, day time {}, night time {}", name, mafiaNum, dayTimeSeconds, nightTimeSeconds);
+		Game res = gameService.addGame(gameCreateParams, playerService.getPlayer(name));
 		return res;
 	}
 	@GetMapping("/{id}")
@@ -49,6 +58,13 @@ public class GameController {
 		Player receiver = playerService.getPlayer(user.getName());
 		Game game = gameService.getGame(id);
 		return new GameDto(game, receiver);
+	}
+	@GetMapping("/accessible-games-list")
+	public List<Game> getAccessibleGames(){
+		LOGGER.info("getting all accessible games");
+		List<Game> games = gameService.getAccessibleGames();
+		LOGGER.info("all accessible games {}", games);
+		return games;
 	}
 	@GetMapping("/{id}/join")
 	public Game joinGame(@PathVariable int id, Principal principal) {
@@ -61,6 +77,13 @@ public class GameController {
 		return game;
 	}
 	
+	@GetMapping("/{id}/exit")
+	public void extGame(@PathVariable int id, Principal principal) {
+		String name = principal.getName();
+		LOGGER.info("exit game id={} player={}", id, name);
+		Player player = playerService.getPlayer(name);
+		gameService.removePlayer(id, player);
+	}
 	/**
 	 * Starts game. Only for game creator.
 	 * @param name

@@ -1,13 +1,18 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { GameService } from '../services/game.service';
+import { ErrorSnackbar } from '../services/error-snackbar';
 import { FormsModule } from '@angular/forms';
 import { Game } from '../model/game.model';
+import { GameParams } from '../model/game.params.model';
 import { Player } from '../model/player.model';
 import { VotePlayers } from '../model/votePlayers.model';
 import * as Stomp from 'stompjs';
 import * as SockJS from 'sockjs-client';
 import { timer, Subscription, Subject, interval } from 'rxjs';
+import { MatDialog, MatDialogRef, MatDialogConfig, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import {GamesComponent} from './games/games.component';
+import {RulesComponent} from './rules/rules.component';
 @Component({
 	selector: 'app-root',
 	templateUrl: './app.component.html',
@@ -19,10 +24,10 @@ export class AppComponent {
 	title = 'demoFront';
 	test = -1;
 	name = "";
-	mafiaNum = 0;
-	gameId = -1;
+	gameParams = new GameParams();
+	gameId = 0;
 	isGameCreated = true;
-	isAuthorized: boolean;
+	isAuthorized = false;
 	isGameStarted = false;
 	game: Game | undefined;
 	message = '';
@@ -30,23 +35,44 @@ export class AppComponent {
 	timerValue = '00:00';
 	timerVoteSubs: Subscription | undefined;
 	timerVoteValue = '00:00';
+	stompClient: Stomp.Client | null = null;
 	//stompClient = Stomp.over(new SockJS('http://localhost:8083/chat'));
-	constructor(private authService: AuthService, private gameService: GameService) {
+	constructor(private authService: AuthService, private gameService: GameService, 
+			private errorSnackbar: ErrorSnackbar,public dialog: MatDialog) {
 
 		let name = localStorage.getItem('name');
 		let gameId = localStorage.getItem('gameId');
 		if (!name) {
 			this.isAuthorized = false;
 		} else {
-			this.isAuthorized = true;
-			this.name = name;
+			this.authService.checkExistance(name).subscribe(
+				(o: boolean) => {
+					if(o){
+						this.isAuthorized = true;
+						this.name = '' + name;
+					} else {
+						this.isAuthorized = false;
+						localStorage.removeItem('name');
+					}
+				},
+				(error) => {
+					this.isAuthorized = false;
+					this.name = '';
+					localStorage.removeItem('name');
+				}
+			);
+			
 		}
 		if (gameId) {
 			this.gameId = +gameId;
-			this.gameService.getGame(this.gameId).subscribe((o) => {
-				this.game = o;
-				this.connectWebSocket();
-				this.setTimer();
+			this.gameService.getGame(this.gameId).subscribe(
+				(o: Game) => {
+					this.game = o;
+					this.connectWebSocket();
+					this.setTimer();
+				}, 
+				(error) => {
+					localStorage.removeItem('gameId');
 			});
 		}
 	}
@@ -61,10 +87,22 @@ export class AppComponent {
 		},
 		(error) =>{
 				console.error(`error while login ${error}`);
+				var msg = 'Ошибка регистрации';
+				if(("" + error).includes('already')){
+					msg = 'Имя уже занято';
+				} else if(("" + error).includes('empty')){
+					msg = 'Имя не может быть пустым';
+				} else if(("" + error).includes('invalid')){
+					msg = 'Недопустимое имя';
+				} else if(("" + error).includes('big')){
+					msg = 'Слишко длинное имя';
+				}
+				this.errorSnackbar.show(msg)
 		});
 	}
 	logout() {
 		console.log('logout app');
+		this.exitGame();
 		localStorage.removeItem('name');
 		this.isAuthorized = false;
 		this.authService.logout().subscribe((o) => {
@@ -78,7 +116,7 @@ export class AppComponent {
 		});
 	}
 	createGame() {
-		this.gameService.createGame(this.mafiaNum).subscribe((o) => {
+		this.gameService.createGame(this.gameParams).subscribe((o) => {
 			this.game = o;
 			this.gameId = this.game.id;
 			localStorage.setItem('gameId', this.gameId.toString());
@@ -97,11 +135,23 @@ export class AppComponent {
 			this.connectWebSocket();
 		});
 	}
+	exitGame(){
+		if(this.game){
+			console.log('exiting game');
+			this.stompClient?.disconnect(()=>{this.stompClient = null});	
+			this.gameService.exitGame(this.game!.id).subscribe((o) => {
+				this.game = undefined;
+				this.gameId = 0;
+				localStorage.removeItem('gameId');			
+			});
+		}
+	}
 	stopGame() {
+		this.stompClient?.disconnect(()=>{this.stompClient = null});
 		this.gameService.stopGame(this.game!.id).subscribe((o) => {
 			this.game = undefined;
 			localStorage.removeItem('gameId');
-			this.gameId = -1;
+			this.gameId = 0;
 			//this.stompClient = Stomp.over(new SockJS('http://localhost:8083/chat'));
 		})
 	}
@@ -121,16 +171,17 @@ export class AppComponent {
 	//Refresh through http to determine user name and role to restrict info about other users
 	connectWebSocket() {
 		let ws = new SockJS('http://localhost:8083/chat');
-		let stompClient = Stomp.over(ws);
+		this.stompClient = Stomp.over(ws);
 		console.log('conectWebSocket');
 		let that = this;
-		stompClient.connect({}, function(frame) {
-			stompClient.subscribe(`/chat/${that.game!.id}`, (message) => {
+		this.stompClient.connect({}, function(frame) {
+			that.stompClient?.subscribe(`/chat/${that.game!.id}`, (message) => {
 				
 				//message contains no useful info, it is just a marker to refresh game.
 				
 				//that.game = JSON.parse(message.body);
 				//that.setTimer();
+				console.log('receivedd message from WebSocket');
 				that.getGame();
 			});
 		});
@@ -218,5 +269,17 @@ export class AppComponent {
 			return '';
 		}
 		return p.roleType;
+	}
+	
+	showAllGames(){
+		this.dialog.open(GamesComponent, {
+			width: '60%',
+			data: {appComponent: this}
+		});
+	}
+	showRules(){
+		this.dialog.open(RulesComponent, {
+			width: '60%'
+		});
 	}
 }
