@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { GameService } from '../services/game.service';
+import { ServerUrl } from '../services/serverUrl';
 import { ErrorSnackbar } from '../services/error-snackbar';
 import { FormsModule } from '@angular/forms';
 import { Game } from '../model/game.model';
@@ -36,9 +37,10 @@ export class AppComponent {
 	timerVoteSubs: Subscription | undefined;
 	timerVoteValue = '00:00';
 	stompClient: Stomp.Client | null = null;
+	stompUrl = `${this.serverUrl.serverUrl}/chat`;
 	//stompClient = Stomp.over(new SockJS('http://localhost:8083/chat'));
 	constructor(private authService: AuthService, private gameService: GameService, 
-			private errorSnackbar: ErrorSnackbar,public dialog: MatDialog) {
+			private errorSnackbar: ErrorSnackbar,public dialog: MatDialog, private serverUrl: ServerUrl) {
 
 		let name = localStorage.getItem('name');
 		let gameId = localStorage.getItem('gameId');
@@ -170,7 +172,7 @@ export class AppComponent {
 	//Connection via tcp/ip to know when to refresh game.
 	//Refresh through http to determine user name and role to restrict info about other users
 	connectWebSocket() {
-		let ws = new SockJS('http://localhost:8083/chat');
+		let ws = new SockJS(this.stompUrl);
 		this.stompClient = Stomp.over(ws);
 		console.log('conectWebSocket');
 		let that = this;

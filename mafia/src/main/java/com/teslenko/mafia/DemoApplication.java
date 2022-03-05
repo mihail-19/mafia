@@ -19,7 +19,7 @@ public class DemoApplication {
 			public void addCorsMappings(CorsRegistry registry) {
 				 registry.addMapping("/**")
 	                .allowedMethods("*").allowCredentials(true)
-	                .allowedOrigins("http://localhost:4200");
+	                .allowedOrigins("http://localhost:4200", "http://localhost", "http://178.151.21.70");
 			}
 		};
 	}

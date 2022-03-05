@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import {HttpClient,HttpParams, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError} from 'rxjs';
 import { catchError} from 'rxjs/operators';
+import {ServerUrl} from'./serverUrl';
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-	private url = "http://localhost:8083";
-  constructor(private http:HttpClient) { }
+	private url = `${this.serverUrl.serverUrl}`;
+  constructor(private http:HttpClient, private serverUrl: ServerUrl) { }
 	login(name: string): Observable<string>{
 		console.log('login');
 		let params: HttpParams = new HttpParams();

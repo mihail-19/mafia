@@ -88,6 +88,7 @@ public class GameServiceImpl implements GameService {
 			}
 			game.sendGame();
 			games.removeIf((o) -> o.getId() == id);
+			maxId--;
 		}
 	}
 

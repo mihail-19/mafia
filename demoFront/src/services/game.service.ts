@@ -4,12 +4,13 @@ import { Observable, throwError } from 'rxjs';
 import {Game} from '../model/game.model';
 import {GameParams} from '../model/game.params.model';
 import { catchError} from 'rxjs/operators';
+import {ServerUrl} from './serverUrl';
 @Injectable({
   providedIn: 'root'
 })
 export class GameService {
-	private url = "http://localhost:8083/game";
-  constructor(private http:HttpClient) { }
+	private url = `${this.serverUrl.serverUrl}/game`;
+  constructor(private http:HttpClient, private serverUrl: ServerUrl) { }
 
 	createGame(gameParams: GameParams): Observable<Game>{
 		let params: HttpParams = new HttpParams();
