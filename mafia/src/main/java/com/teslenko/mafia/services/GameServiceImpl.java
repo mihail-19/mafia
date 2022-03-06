@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import com.teslenko.mafia.entity.Game;
 import com.teslenko.mafia.entity.GameBuilder;
 import com.teslenko.mafia.entity.GameCreateParams;
+import com.teslenko.mafia.entity.GameProcess;
+import com.teslenko.mafia.entity.MafiaRoleSetter;
 import com.teslenko.mafia.entity.Message;
 import com.teslenko.mafia.entity.Player;
 import com.teslenko.mafia.entity.RoleType;
@@ -27,8 +29,12 @@ import com.teslenko.mafia.web.GameController;
 @Service
 public class GameServiceImpl implements GameService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GameServiceImpl.class);
+
 	@Autowired
 	private SimpMessagingTemplate messagingTemplate;
+	@Autowired 
+	private MafiaRoleSetter mafiaRoleSetter;
+	
 	private List<Game> games = new ArrayList<>();
 	private volatile int maxId = 1;
 
@@ -43,7 +49,6 @@ public class GameServiceImpl implements GameService {
 				.create();
 		games.add(game);
 		maxId++;
-		game.addPlayer(creator);
 		LOGGER.info("Game is created game={}", game);
 		return game;
 	}
@@ -62,7 +67,7 @@ public class GameServiceImpl implements GameService {
 		LOGGER.trace("starting game {" + id + "}");
 		Game game = getGame(id);
 		if (game.getCreator().equals(initiator)) {
-			game.startGame();
+			game.startGame(mafiaRoleSetter, new GameProcess(game));
 		} else {
 			throw new UnauthorizedPlayerException(
 					"Player {" + initiator.getName() + "} is not creator for game {" + id + "}");

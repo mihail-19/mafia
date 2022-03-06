@@ -50,6 +50,9 @@ public class Vote {
 		if(!isStarted) {
 			return false;
 		}
+		if(isFinished) {
+			return true;
+		}
 		if(voteMap.size() == totalPlayers || LocalTime.now().isAfter(timeStart.plusSeconds(voteTimeSeconds))) {
 			isFinished = true;
 			return true;

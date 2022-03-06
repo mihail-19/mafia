@@ -11,8 +11,15 @@ import com.teslenko.mafia.entity.Player;
 import com.teslenko.mafia.entity.RoleType;
 import com.teslenko.mafia.entity.Vote;
 
+/**
+ * DTO for {@link Game} for hiding fields according to player role.
+ * @author Mykhailo Teslenko
+ *
+ */
 public class GameDto {
 	private static final Chat EMPTY_CHAT = new Chat();
+	
+	//Simply copied fiends
 	private int id;
 	private Player creator;
 	private int dayTimeSeconds;
@@ -20,17 +27,31 @@ public class GameDto {
 	private boolean isNight;
 	private boolean isStarted;
 	private boolean isFinished;
+	private boolean isCitizenWin;
 	private LocalTime startTime;
 	private int mafiaNum;
 	private Chat chat;
 	
+	//Fields copied with conditions
 	private List<Player> players = new ArrayList<>();
 	private Vote vote;
+	
+	/**
+	 * Creates DTO copying fields from game according to {@link Player} receiver role.
+	 * If game is finished, all fields are simply copied.
+	 * @param game - game to transform
+	 * @param receiver - {@link Player} to receive the game
+	 */
 	public GameDto(Game game, Player receiver) {
 		simpleCopyFromGame(game);
-		preparePlayers(game, receiver);
-		prepareVote(game, receiver);
-		prepareChat(game, receiver);
+		if(!game.getIsFinished()) {
+			preparePlayers(game, receiver);
+			prepareVote(game, receiver);
+			prepareChat(game, receiver);
+		} else {
+			players = game.getPlayers();
+			chat = game.getChat();
+		}
 	}
 	
 	private void simpleCopyFromGame(Game game) {
@@ -43,7 +64,14 @@ public class GameDto {
 		this.isFinished = game.getIsFinished();
 		this.startTime = game.getStartTime();
 		this.mafiaNum = game.getMafiaNum();
+		this.isCitizenWin = game.getIsCitizenWin();
 	}
+	
+	/*
+	 * Adding players  from {@link Game} List. If receiver is 
+	 * mafia, players list is simply copied.
+	 * If receiver is citizen, roleType of other players set to UNKNOWN.
+	 */
 	private void preparePlayers(Game game, Player receiver){
 		//Mafia player could know about all others
 		if(receiver.getRoleType() == RoleType.MAFIA) {
@@ -63,6 +91,12 @@ public class GameDto {
 			}
 		}
 	}
+	
+	/*
+	 * If citizen vote it is simply copied.
+	 * If mafia vote, only mafia receiver will get real vote from game,
+	 * citizens will get vote without voters list.
+	 */
 	private void prepareVote(Game game, Player receiver) {
 		if(game.getVote() != null && game.getVote().getIsMafiaVote()) {
 			if(receiver.getRoleType().equals(RoleType.MAFIA)) {
@@ -78,6 +112,12 @@ public class GameDto {
 			vote = game.getVote();
 		}
 	}
+	
+	/*
+	 * Chat for citizens simply copied.
+	 * Real mafia chat could be received only by mafia,
+	 * citizens get empty chat to avoid NPE.
+	 */
 	private void prepareChat(Game game, Player receiver) {
 		if(game.getIsNight()) {
 			if(receiver.getRoleType() == RoleType.MAFIA) {
@@ -187,4 +227,7 @@ public class GameDto {
 		this.vote = vote;
 	}
 	
+	public boolean getIsCitizenWin() {
+		return isCitizenWin;
+	}
 }

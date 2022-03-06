@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Game process in separate Thread. Responses for game period changes - day/night and citizen/mafia votes.
+ * Controls game methods after game is started.
  * @author Mykhailo Teslenko
  *
  */
@@ -34,6 +35,7 @@ public class GameProcess extends Thread {
 			} else {
 				startVoteMafia(game);
 			}
+			game.tryFinishGame();
 			game.startNewPeriod();
 			game.sendGame();
 		}

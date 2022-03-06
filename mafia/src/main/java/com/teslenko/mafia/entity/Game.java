@@ -1,13 +1,8 @@
 package com.teslenko.mafia.entity;
 
-import java.security.SecureRandom;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,8 +10,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.teslenko.mafia.exception.VoteException;
 import com.teslenko.mafia.services.GameSender;
-import com.teslenko.mafia.services.GameServiceImpl;
-import com.teslenko.mafia.util.RandomRolesGenerator;
 
 public class Game {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Game.class);
@@ -33,50 +26,57 @@ public class Game {
 	private LocalTime startTime;
 	private int mafiaNum;
 	private Chat chat;
+	private boolean isCitizenWin;
 	@JsonIgnore
 	private GameProcess gameProcess;
 	@JsonIgnore
 	private GameSender gameSender;
-	
-	public Game(int id,int dayTimeSeconds,int nightTimeSecods, Player creator, int mafiaNum) {
+
+	public Game(int id, int dayTimeSeconds, int nightTimeSecods, Player creator, int mafiaNum) {
 		this.id = id;
 		this.dayTimeSeconds = dayTimeSeconds;
 		this.nightTimeSeconds = nightTimeSecods;
 		this.creator = creator;
 		this.mafiaNum = mafiaNum;
+		addPlayer(creator);
 		chat = new Chat();
 		chat.setGreetingMsg("-------- Новая игра! Общий чат -------------");
 	}
-	
+
 	public synchronized void addPlayer(Player player) {
 		LOGGER.info("adding player={} into game={}", player, this);
-		if(isStarted || isFinished) {
-			LOGGER.error("game is not running game={}", this);
-			throw new IllegalArgumentException("Game already started");
+		if (isStarted || isFinished) {
+			LOGGER.error("game is already started game={}", this);
+			throw new IllegalStateException("Game already started");
 		}
-		if(player == null) {
+		if (player == null) {
 			LOGGER.error("trying to add null player into game={}", this);
-			throw new IllegalArgumentException("Could not add null player into game");
+			throw new IllegalStateException("Could not add null player into game");
 		}
-		if(players.contains(player)) {
+		if (players.contains(player)) {
 			LOGGER.error("trying to add existing player into game, player={}, game={}", player, this);
-			throw new IllegalArgumentException("Player {" + player + "} already added into game");
+			throw new IllegalStateException("Player {" + player + "} already added into game");
 		}
 		players.add(player);
 	}
-	
+
 	public boolean hasPlayer(Player player) {
-		if(players.contains(player)) {
+		if (players.contains(player)) {
 			return true;
 		}
 		return false;
 	}
-	
+
+	/**
+	 * Kills player according to vote results
+	 * 
+	 * @return
+	 */
 	public boolean killPlayerByVoteResults() {
 		LOGGER.info("killing player for vote result for game={}", this);
-		if(vote.isFinished()) {
+		if (vote.isFinished()) {
 			Player p = vote.findChosenPlayer();
-			if(p != null) {
+			if (p != null) {
 				LOGGER.info("player was killed by vote results player={}, game={}", p, this);
 				p.setIsAlive(false);
 				return true;
@@ -85,148 +85,147 @@ public class Game {
 		LOGGER.info("No player was killed by vote results game={}", this);
 		return false;
 	}
-	
-	public void startGame() {
-		gameProcess = new GameProcess(this);
-		setRandomRoles();
+
+	/**
+	 * Trying to finish game according to players stay alive
+	 */
+	public void tryFinishGame() {
+		int mafiaAlive = countAliveMafia();
+		int totalAlive = countAlive();
+		if (mafiaAlive == 0 && totalAlive != 0) {
+			isFinished = true;
+			isCitizenWin = true;
+		} else if (mafiaAlive == totalAlive) {
+			isFinished = true;
+			isCitizenWin = false;
+		}
+	}
+
+	/**
+	 * Starts game - roles are given, day/night periods changes.
+	 * 
+	 * @param roleSetter
+	 */
+	public void startGame(MafiaRoleSetter roleSetter, GameProcess gameProcess) {
+		this.gameProcess = gameProcess;
+		players = roleSetter.setRolesToPlayers(players);
+		mafiaNum = roleSetter.getActualMafiaNum();
 		startTime = LocalTime.now();
 		isStarted = true;
 		vote = new Vote(players.size(), false);
 		LOGGER.info("game is started, game={}", this);
 		gameProcess.start();
 	}
-	private void setRandomRoles() {
-		int playersNum = players.size();
-		int citizens = 0;
-		int mafia = 0;
-		SecureRandom rnd = new SecureRandom();
-		if(playersNum == 1) {
-			mafiaNum = 1;
-			Player p = players.get(0);
-			p.setRoleType(RoleType.CITIZEN);
-			p.setMafiaRole(RandomRolesGenerator.generateCitizenRole());
-		} else 	if(playersNum <= 3) {
-			mafiaNum = 1;
-			int mafiaIndex = rnd.nextInt(playersNum);
-			Player pm = players.get(mafiaIndex);
-			pm.setRoleType(RoleType.MAFIA);
-			pm.setMafiaRole(RandomRolesGenerator.generateMafiaRole());
-			for(int i = 0; i<playersNum; i++) {
-				if(i != mafiaIndex) {
-					Player ps = players.get(i);
-					ps.setRoleType(RoleType.CITIZEN);
-					ps.setMafiaRole(RandomRolesGenerator.generateCitizenRole());
-				}
-			}
-		} else {
-			Set<Integer> mafiaIndexes = new HashSet<>();
-			while(mafiaIndexes.size() < mafiaNum) {
-				int mafiaIndex = rnd.nextInt(playersNum);
-				if(!mafiaIndexes.contains(mafiaIndex)) {
-					mafiaIndexes.add(mafiaIndex);
-				}
-			}
-			for(int i = 0; i<playersNum; i++) {
-				Player p = players.get(i);
-				if(mafiaIndexes.contains(i)) {
-					p.setMafiaRole(RandomRolesGenerator.generateMafiaRole());
-					p.setRoleType(RoleType.MAFIA);
-					mafiaIndexes.remove(i);
-				} else {
-					p.setRoleType(RoleType.CITIZEN);
-					p.setMafiaRole(RandomRolesGenerator.generateCitizenRole());
-				}
-			}
-		}
-	}
+
 	public void citizenVoteAgain(Player voter, Player target) {
+		if (!isStarted) {
+			LOGGER.warn("Trying to vote while game is not started, game {}, voter {}", this, voter);
+			throw new VoteException("Trying to vote while game is not started, game " + this + ", voter " + voter);
+		}
 		throwIfAnyIsDead(voter, target);
-		if(players.contains(voter)) {
+		if (players.contains(voter)) {
 			vote.addVoice(voter, target);
 		}
 	}
+
 	public void mafiaVoteAgain(Player voter, Player target) {
-		if(voter.getRoleType().equals(RoleType.CITIZEN)) {
+		if (!isStarted) {
+			LOGGER.warn("Trying to vote while game is not started, game {}, voter {}", this, voter);
+			throw new VoteException("Trying to vote while game is not started, game " + this + ", voter " + voter);
+		}
+		if (voter.getRoleType().equals(RoleType.CITIZEN)) {
 			LOGGER.warn("Mafia vote error: voter {} is not from mafia", voter.getName());
 			throw new VoteException("Mafia vote error: voter {" + voter.getName() + "} is not from mafia");
 		}
-		if(target.getRoleType().equals(RoleType.MAFIA)){
+		if (target.getRoleType().equals(RoleType.MAFIA)) {
 			LOGGER.warn("Mafia vote error: vote target {} is from mafia, cannot kill", target.getName());
 			throw new VoteException("Mafia vote target {" + target.getName() + "} is from mafia");
 		}
 		throwIfAnyIsDead(voter, target);
-		if(players.contains(voter)) {
+		if (players.contains(voter)) {
 			vote.addVoice(voter, target);
 		}
 	}
-	private void throwIfAnyIsDead(Player ... players) {
-		for(Player p : players) {
-			if(!p.getIsAlive()) {
+
+	private void throwIfAnyIsDead(Player... players) {
+		for (Player p : players) {
+			if (!p.getIsAlive()) {
 				LOGGER.warn("Player {} is already dead", p.getName());
 				throw new VoteException("Player {" + p.getName() + "} is dead");
 			}
 		}
 	}
-	
-	
+
 	/**
 	 * Resets vote for citizen vote.
 	 **/
-	
+
 	public void resetVoteCitizen() {
 		vote = new Vote(countAlive(), false);
 	}
+
 	/**
 	 * Resets vote for mafia vote.
 	 */
 	public void resetVoteMafia() {
 		vote = new Vote(countAliveMafia(), true);
 	}
-	
+
 	/**
 	 * Resets start time, chat, deleting all of the messages.
+	 * Sets special greeting for period indication or game finish indication.
 	 */
 	public void startNewPeriod() {
 		chat = new Chat();
 		String greetings;
-		if(isNight) {
-			greetings = "--------------- Чат для мафии -------------------";
+		if (isFinished) {
+			if(isCitizenWin) {
+				greetings = "-------- Игра завершена! Победили мирные жители -----------";
+			} else {
+				greetings = "-------- Игра завершена! Победила мафия -----------";
+			}
 		} else {
-			greetings = "---------------   Общий чат  --------------------";
+			if (isNight) {
+				greetings = "--------------- Чат для мафии -------------------";
+			} else {
+				greetings = "---------------   Общий чат  --------------------";
+			}
 		}
 		chat.setGreetingMsg(greetings);
 		setStartTime(LocalTime.now());
 	}
-	
+
 	/**
 	 * Count all alive players.
 	 **/
 	public int countAlive() {
 		int res = 0;
-		for(Player p : players) {
-			if(p.isAlive()) {
+		for (Player p : players) {
+			if (p.isAlive()) {
 				res++;
 			}
 		}
 		return res;
 	}
-	
+
 	/**
 	 * Count alive players with role MAFIA
+	 * 
 	 * @return
 	 */
 	public int countAliveMafia() {
 		int res = 0;
-		for(Player p : players) {
-			if(p.getIsAlive() && p.getRoleType().equals(RoleType.MAFIA)) {
+		for (Player p : players) {
+			if (p.getIsAlive() && p.getRoleType().equals(RoleType.MAFIA)) {
 				res++;
 			}
 		}
 		return res;
 	}
-	
+
 	/**
 	 * Computes period finish time according to day/night length.
+	 * 
 	 * @return
 	 */
 	public LocalTime periodFinishTime() {
@@ -236,29 +235,29 @@ public class Game {
 			return getStartTime().plusSeconds(getNightTimeSeconds());
 		}
 	}
-	
+
 	/**
 	 * Method to communicate with game players
 	 */
 	public void sendGame() {
-		//sending request to players to update game
+		// sending request to players to update game
 		gameSender.sendRequestForGameRefresh();
 	}
-	
+
 	/**
 	 * Removes player from game.
+	 * 
 	 * @param player
 	 */
 	public void removePlayer(Player player) {
 		players.removeIf((o) -> o.equals(player));
 		sendGame();
 	}
-	
-	
+
 	public void stopGame() {
 		isFinished = true;
 	}
-	
+
 	public int getMaxId() {
 		return maxId;
 	}
@@ -342,7 +341,6 @@ public class Game {
 	public void setChat(Chat chat) {
 		this.chat = chat;
 	}
-	
 
 	public Vote getVote() {
 		return vote;
@@ -351,6 +349,7 @@ public class Game {
 	public void setVote(Vote vote) {
 		this.vote = vote;
 	}
+
 	public Player getCreator() {
 		return creator;
 	}
@@ -362,7 +361,7 @@ public class Game {
 	public int getId() {
 		return id;
 	}
-	
+
 	public GameProcess getGameProcess() {
 		return gameProcess;
 	}
@@ -378,11 +377,19 @@ public class Game {
 	public void setGameSender(GameSender gameSender) {
 		this.gameSender = gameSender;
 	}
-
+	
+	public void setIsCitizenWin(boolean isCitizenWin) {
+		this.isCitizenWin = isCitizenWin;
+	}
+	
+	public boolean getIsCitizenWin() {
+		return isCitizenWin;
+	}
+	
 	@Override
 	public String toString() {
 		return "Game [id=" + id + ", dayTimeSeconds=" + dayTimeSeconds + ", nightTimeSeconds=" + nightTimeSeconds
 				+ ", startTime=" + startTime + ", mafiaNum=" + mafiaNum + "]";
 	}
-	
+
 }
