@@ -6,55 +6,89 @@
 	</div>
 	
 	<div class="mafia-header__title">
-		<div *ngIf="!isAuthorized">Выберите никнейм</div>
 		<div  *ngIf="game">Игра №{{gameId}}, создатель игры: {{game!.creator?.name}}</div>
-		<button class="game-field__action-button game-field__action-button_start" *ngIf="game && game!.creator?.name == name && !game!.isStarted" (click)="startGame()">Начать!</button>
-		<button class="game-field__action-button game-field__action-button_stop" *ngIf="game && game!.creator?.name == name" (click)="stopGame()">Закончить</button>
-		<button class="game-field__action-button game-field__action-button_exit" *ngIf="game" (click)="exitGame()">Покинуть</button>
 	</div>
 	<div class="mafia-header__right" >
 		<button class="mafia-header__rules-button" (click)="showRules()">Правила</button>
-		<div class="mafia-header_login" *ngIf="!isAuthorized">
-				<input [(ngModel)]="name"  (keyup.enter)="login()" id="name" >
-				<button class="mafia-header__login-button" (click)="login()">Войти</button>
-		</div>
-	
-		<div class="mafia-header_login" *ngIf="isAuthorized">
-				<div class="mafia-header__name">{{name}}</div>
-				<button class="mafia-header__login-button" (click)="logout()">Выйти</button>
-		</div>
+				<div class="mafia-header__name" *ngIf="isAuthorized">{{name}}</div>
+				<button class="mafia-header__logout-button" *ngIf="isAuthorized" (click)="logout()">Выйти</button>
 	</div>
 </div>
 
 <h1 class="authorize-note" *ngIf="!isAuthorized">Вы не вошли, введите имя пользователя чтобы начать</h1>
+<div class="mafia__login" *ngIf="!isAuthorized">
+				<input [(ngModel)]="name"  (keyup.enter)="login()" id="name" >
+				<button class="mafia__login-button" (click)="login()">Войти</button>
+		</div>
 <div class="mafia" *ngIf="isAuthorized">
+	<div class="mobile__switch" *ngIf="game">
+		<button class="mobile-switch__button mobile-switch__button_players" (click)="showPlayers()" [disabled]="mobileShowPlayers">Игроки</button>
+		<button class="mobile-switch__button mobile-switch__button_game" (click)="showGame()" [disabled]="!mobileShowPlayers">Меню</button>
+	</div>
 	<div class="game-prepare" *ngIf="!game">
 		<div class="game-prepare__field">
 			<h2>Новая игра</h2>
-			<p>Время (секунды):</p>
-			<p> 
-				- день <input [(ngModel)]=gameParams.dayTimeSeconds>
-				- ночь <input [(ngModel)]=gameParams.nightTimeSeconds>
-				- голосование <input [(ngModel)]=gameParams.voteTimeSeconds>
-			</p>
-			<p>
-				Количество мафии: <input [(ngModel)]=gameParams.mafiaNum> 
-				<button (click)="createGame()">Начать игру</button>
-			</p>
+			<table>
+				<tr>
+					<td>Время (секунды):</td>
+				</tr>
+				<tr>
+					<td> 
+						- день 
+					</td>
+					<td>
+						<input [(ngModel)]=gameParams.dayTimeSeconds>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						- ночь
+					</td>
+					<td>
+						<input [(ngModel)]=gameParams.nightTimeSeconds>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						- голосование
+					</td>
+					<td>
+						<input [(ngModel)]=gameParams.voteTimeSeconds>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Количество мафии:
+					</td>
+					<td>
+						 <input [(ngModel)]=gameParams.mafiaNum>
+					</td>
+				</tr>
+			</table>
+			<button (click)="createGame()">Начать игру</button>
 		</div>
 		<div class="game-prepare__field">
 			<h2>Присоединиться к игре</h2>
-			<p>
-				Код игры: <input [(ngModel)]=gameId>
-				<button (click)="joinGame()">Присоединиться</button>
-				<button *ngIf="isAuthorized" (click)="showAllGames()" class="game-prepare__game-list-button">Доступные игры</button>
-			</p>
+			<table>
+			<tr>
+				<td>
+					Код игры: 
+				</td>
+				<td>
+					<input [(ngModel)]=gameId>
+				</td>
+				<td>
+					<button (click)="joinGame()">Присоединиться</button>
+				</td>
+			</tr>
+			</table>
+			<button *ngIf="isAuthorized" (click)="showAllGames()" class="game-prepare__game-list-button">Доступные игры</button>
 		</div>
 		
 	</div>
 	
-	<div class="game-field" *ngIf="game">
-		<div class="players">
+	<div class="game-field" *ngIf="game" >
+		<div class="players" [ngClass]="{'disply-none': !mobileShowPlayers}">
 			<div class="players__player"  *ngFor="let p of game?.players">
 				<div class="players__vote-results"><span *ngIf="game!.vote && game!.vote.isStarted && !game!.vote.isFinished && getTargetNameForVoter(p, game!.vote.voteMap).length > 0">Голос против  {{getTargetNameForVoter(p, game!.vote.voteMap)}}</span></div>
 				<div class="players__player-name"><span *ngIf="p.name == name">(я) </span>{{p.name}}</div>
@@ -73,9 +107,14 @@
 			</div>
 		</div>
 		
-		<div class="game-field__main">
+		<div class="game-field__main" [ngClass]="{'disply-none': mobileShowPlayers}">
 			<div class="game-field__actions" [ngClass]="{'game-filed__timing_night': game!.isNight, 'game-filed__timing_day': !game!.isNight}">
 				<div class="game-field__background" [ngClass]="{'game-field__background_day': !game!.isNight, 'game-field__background_night': game!.isNight}"></div>
+				<div class="game-field__actions-row" >
+					<button class="game-field__action-button game-field__action-button_start" *ngIf="game && game!.creator?.name == name && !game!.isStarted" (click)="startGame()">Начать!</button>
+					<button class="game-field__action-button game-field__action-button_stop" *ngIf="game && game!.creator?.name == name" (click)="stopGame()">Закончить</button>
+					<button class="game-field__action-button game-field__action-button_exit" *ngIf="game" (click)="exitGame()">Покинуть</button>
+				</div>
 				<div class="game-field__actions-row" >
 					<div *ngIf="game!.isNight" >Ночь: </div>
 					<div *ngIf="!game!.isNight" >День: </div>

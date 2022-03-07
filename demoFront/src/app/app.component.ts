@@ -38,6 +38,7 @@ export class AppComponent {
 	timerVoteValue = '00:00';
 	stompClient: Stomp.Client | null = null;
 	stompUrl = `${this.serverUrl.serverUrl}/chat`;
+	mobileShowPlayers = false;
 	//stompClient = Stomp.over(new SockJS('http://localhost:8083/chat'));
 	constructor(private authService: AuthService, private gameService: GameService, 
 			private errorSnackbar: ErrorSnackbar,public dialog: MatDialog, private serverUrl: ServerUrl) {
@@ -281,7 +282,13 @@ export class AppComponent {
 	}
 	showRules(){
 		this.dialog.open(RulesComponent, {
-			width: '60%'
+			width: '90%'
 		});
+	}
+	showPlayers(){
+		this.mobileShowPlayers = true;
+	}
+	showGame(){
+		this.mobileShowPlayers = false;
 	}
 }

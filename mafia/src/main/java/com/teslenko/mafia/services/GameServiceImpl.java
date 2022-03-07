@@ -16,6 +16,7 @@ import com.teslenko.mafia.entity.Game;
 import com.teslenko.mafia.entity.GameBuilder;
 import com.teslenko.mafia.entity.GameCreateParams;
 import com.teslenko.mafia.entity.GameProcess;
+import com.teslenko.mafia.entity.MafiaRandomRolesSetter;
 import com.teslenko.mafia.entity.MafiaRoleSetter;
 import com.teslenko.mafia.entity.Message;
 import com.teslenko.mafia.entity.Player;
@@ -32,8 +33,7 @@ public class GameServiceImpl implements GameService {
 
 	@Autowired
 	private SimpMessagingTemplate messagingTemplate;
-	@Autowired 
-	private MafiaRoleSetter mafiaRoleSetter;
+	
 	
 	private List<Game> games = new ArrayList<>();
 	private volatile int maxId = 1;
@@ -66,7 +66,9 @@ public class GameServiceImpl implements GameService {
 	public Game startGame(Player initiator, int id) {
 		LOGGER.trace("starting game {" + id + "}");
 		Game game = getGame(id);
+		
 		if (game.getCreator().equals(initiator)) {
+			MafiaRoleSetter mafiaRoleSetter = new MafiaRandomRolesSetter(game.getMafiaNum());
 			game.startGame(mafiaRoleSetter, new GameProcess(game));
 		} else {
 			throw new UnauthorizedPlayerException(

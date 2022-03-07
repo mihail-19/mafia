@@ -14,7 +14,7 @@ import com.teslenko.mafia.util.RandomRolesGenerator;
  * @author Mykhailo Teslenko
  *
  */
-@Component
+
 public class MafiaRandomRolesSetter implements MafiaRoleSetter{
 	
 	private int mafiaNum;
