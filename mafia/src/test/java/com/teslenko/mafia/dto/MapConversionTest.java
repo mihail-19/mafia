@@ -1,4 +1,4 @@
-package com.example.demo.dto;
+package com.teslenko.mafia.dto;
 
 import java.io.IOException;
 import java.io.StringWriter;

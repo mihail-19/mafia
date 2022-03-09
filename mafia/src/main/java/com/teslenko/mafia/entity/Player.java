@@ -15,6 +15,7 @@ public class Player {
 	public Player(String name) {
 		this.name = name;
 		lastActivity = LocalDateTime.now();
+		roleType = RoleType.UNKNOWN;
 	}
 
 	public int getId() {

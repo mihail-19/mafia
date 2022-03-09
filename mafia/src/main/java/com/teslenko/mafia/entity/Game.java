@@ -3,6 +3,7 @@ package com.teslenko.mafia.entity;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -243,6 +244,13 @@ public class Game {
 		// sending request to players to update game
 		gameSender.sendRequestForGameRefresh();
 	}
+	
+	/**
+	 * Sends message for game is finished
+	 */
+	public void sendGameEnd() {
+		gameSender.sendGameEnd();
+	}
 
 	/**
 	 * Removes player from game.
@@ -250,6 +258,10 @@ public class Game {
 	 * @param player
 	 */
 	public void removePlayer(Player player) {
+		if(!players.contains(player)) {
+			LOGGER.warn("trying to remove player {} that is not joind to game {}", player, this);
+			throw new NoSuchElementException("trying to remove player that is not joined to game");
+		}
 		players.removeIf((o) -> o.equals(player));
 		sendGame();
 	}

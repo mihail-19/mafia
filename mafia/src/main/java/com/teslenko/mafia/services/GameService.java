@@ -7,6 +7,7 @@ import com.teslenko.mafia.entity.GameCreateParams;
 import com.teslenko.mafia.entity.Player;
 
 public interface GameService {
+	List<Game> getAll();
 	Game addGame(GameCreateParams gameCreatePrams, Player creator);
 	Game getGame(int id);
 	Game startGame(Player initiator, int id);

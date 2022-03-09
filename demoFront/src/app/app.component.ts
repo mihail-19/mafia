@@ -143,20 +143,22 @@ export class AppComponent {
 			console.log('exiting game');
 			this.stompClient?.disconnect(()=>{this.stompClient = null});	
 			this.gameService.exitGame(this.game!.id).subscribe((o) => {
-				this.game = undefined;
-				this.gameId = 0;
-				localStorage.removeItem('gameId');			
+				this.removeGameInfo();		
 			});
 		}
 	}
 	stopGame() {
 		this.stompClient?.disconnect(()=>{this.stompClient = null});
 		this.gameService.stopGame(this.game!.id).subscribe((o) => {
-			this.game = undefined;
-			localStorage.removeItem('gameId');
-			this.gameId = 0;
+			this.removeGameInfo();
 			//this.stompClient = Stomp.over(new SockJS('http://localhost:8083/chat'));
 		})
+	}
+	
+	removeGameInfo(){
+		this.game = undefined;
+		this.gameId = 0;
+		localStorage.removeItem('gameId');	
 	}
 	getGame() {
 		this.gameService.getGame(this.gameId).subscribe((o) => {
@@ -184,8 +186,14 @@ export class AppComponent {
 				
 				//that.game = JSON.parse(message.body);
 				//that.setTimer();
-				console.log('receivedd message from WebSocket');
-				that.getGame();
+				let msg = '' + message.body;
+				console.log(`receivedd message from WebSocket: ${msg}`);
+				if(msg == 'refresh'){
+					that.getGame();
+				} else if(msg == 'end'){
+					that.stompClient?.disconnect(()=>{that.stompClient = null});
+					that.removeGameInfo();
+				}
 			});
 		});
 	}

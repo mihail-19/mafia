@@ -37,8 +37,12 @@ public class PlayerServiceImpl implements PlayerService, UserDetailsService {
 	@Value("${player.inspiration.minutes}")
 	private int playerInspirationMinutes;
 
+	private final PlayerValidator playerValidator;
+	
 	@Autowired
-	private PlayerValidator playerValidator;
+	public PlayerServiceImpl(PlayerValidator playerValidator) {
+		this.playerValidator = playerValidator;
+	}
 	
 	private List<Player> players = new ArrayList<>();
 	private volatile int playersMaxId = 1;

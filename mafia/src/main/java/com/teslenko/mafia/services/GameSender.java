@@ -32,4 +32,9 @@ public class GameSender {
 		LOGGER.trace("sending request for game refreshing to all players, game {}", game);
 		messagingTemplate.convertAndSend(msgUrl, "refresh");
 	}
+	
+	public void sendGameEnd() {
+		LOGGER.info("sending game is finished message");
+		messagingTemplate.convertAndSend(msgUrl, "end");
+	}
 }

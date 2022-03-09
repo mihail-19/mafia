@@ -1,6 +1,5 @@
 package com.teslenko.mafia.services;
 
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -25,30 +24,37 @@ import com.teslenko.mafia.exception.IllegalMafiaRoleActionException;
 import com.teslenko.mafia.exception.NameBusyException;
 import com.teslenko.mafia.exception.UnauthorizedPlayerException;
 import com.teslenko.mafia.exception.VoteException;
-import com.teslenko.mafia.web.GameController;
 
 @Service
 public class GameServiceImpl implements GameService {
+
+	// TODO REMOVING GAME FREING ID !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(GameServiceImpl.class);
 
-	@Autowired
 	private SimpMessagingTemplate messagingTemplate;
-	
-	
 	private List<Game> games = new ArrayList<>();
-	private volatile int maxId = 1;
+	private GameIdGenerator gameIdGenerator;
+
+	@Autowired
+	public GameServiceImpl(SimpMessagingTemplate messagingTemplate, GameIdGenerator gameIdGenerator) {
+		this.messagingTemplate = messagingTemplate;
+		this.gameIdGenerator = gameIdGenerator;
+	}
+
+	@Override
+	public List<Game> getAll() {
+		LOGGER.info("getting all games");
+		return games;
+	}
 
 	@Override
 	public synchronized Game addGame(GameCreateParams gameCreateParams, Player creator) {
-		Game game = new GameBuilder(messagingTemplate)
-				.id(maxId)
+		Game game = new GameBuilder(messagingTemplate).id(gameIdGenerator.generateId())
 				.dayTimeSeconds(gameCreateParams.getDayTimeSeconds())
-				.nightTimeSeconds(gameCreateParams.getNightTimeSeconds())
-				.creator(creator)
-				.mafiaNum(gameCreateParams.getMafiaNum())
-				.create();
+				.nightTimeSeconds(gameCreateParams.getNightTimeSeconds()).creator(creator)
+				.mafiaNum(gameCreateParams.getMafiaNum()).create();
 		games.add(game);
-		maxId++;
 		LOGGER.info("Game is created game={}", game);
 		return game;
 	}
@@ -66,14 +72,18 @@ public class GameServiceImpl implements GameService {
 	public Game startGame(Player initiator, int id) {
 		LOGGER.trace("starting game {" + id + "}");
 		Game game = getGame(id);
-		
-		if (game.getCreator().equals(initiator)) {
-			MafiaRoleSetter mafiaRoleSetter = new MafiaRandomRolesSetter(game.getMafiaNum());
-			game.startGame(mafiaRoleSetter, new GameProcess(game));
-		} else {
+
+		if (!game.getCreator().equals(initiator)) {
+			LOGGER.error("trying to start by not creator game {}, ", game);
 			throw new UnauthorizedPlayerException(
 					"Player {" + initiator.getName() + "} is not creator for game {" + id + "}");
 		}
+		if (game.getIsStarted()) {
+			LOGGER.error("trying to start game that is already started, game {} ", game);
+			throw new IllegalStateException("Game is already started -> " + game);
+		}
+		MafiaRoleSetter mafiaRoleSetter = new MafiaRandomRolesSetter(game.getMafiaNum());
+		game.startGame(mafiaRoleSetter, new GameProcess(game));
 		return game;
 	}
 
@@ -85,18 +95,20 @@ public class GameServiceImpl implements GameService {
 			LOGGER.error("failed to stop game with id={}, player={} is not game creator", id, initiator);
 			throw new UnauthorizedPlayerException(
 					"Player {" + initiator.getName() + "} is not creator for game {" + id + "}");
-		} else {
-			List<Player> gamePlayers = game.getPlayers();
-			for (Player p : gamePlayers) {
-				p.setAlive(true);
-				p.setMafiaRole(null);
-				p.setRoleType(null);
-				p.setUntouchable(false);
-			}
-			game.sendGame();
-			games.removeIf((o) -> o.getId() == id);
-			maxId--;
 		}
+		if(!game.getIsStarted()) {
+			LOGGER.error("trying to stop game that is not started, game {}", game);
+			throw new IllegalStateException("trying to stop game that is not started -> " + game);
+		}
+		List<Player> gamePlayers = game.getPlayers();
+		for (Player p : gamePlayers) {
+			p.setAlive(true);
+			p.setMafiaRole(null);
+			p.setRoleType(null);
+			p.setUntouchable(false);
+		}
+		game.sendGameEnd();
+		removeGame(id);
 	}
 
 	@Override
@@ -107,8 +119,8 @@ public class GameServiceImpl implements GameService {
 			game.addPlayer(player);
 		} else {
 			LOGGER.warn("failed add player to game, game already contains player, game={}, player={}", game, player);
-			throw new NameBusyException("failed add player to game, game already contains "
-					+ "player, game=" + game + ", player=" + player);
+			throw new NameBusyException("failed add player to game, game already contains " + "player, game=" + game
+					+ ", player=" + player);
 		}
 
 	}
@@ -117,34 +129,37 @@ public class GameServiceImpl implements GameService {
 	public Game addMessage(int id, Player player, String msg) {
 		LOGGER.info("adding message to game with id={}, by player={}, msg={}", id, player, msg);
 		Game game = getGame(id);
-		if(game.getIsNight() && player.getRoleType() != RoleType.MAFIA) {
+		if (game.getIsNight() && player.getRoleType() != RoleType.MAFIA) {
 			LOGGER.warn("could not add message {} to chat at night for citizen player {}, game {}", msg, player, game);
 			throw new IllegalMafiaRoleActionException("could not add message to chat at night for citizen player");
 		}
 		if (game.hasPlayer(player)) {
 			game.getChat().addMessage(new Message(player.getName(), msg));
 			game.sendGame();
+		} else {
+			LOGGER.warn("trying to add message {} to chat from not joined player {}, game {}", msg, player, game);
+			throw new IllegalStateException("trying to add message to chat from not joined player");
 		}
 		return game;
 	}
-	
+
 	@Override
 	public void voteCitizen(int id, Player voter, Player target) {
 		Game game = getGame(id);
-		if(!game.hasPlayer(voter)) {
+		if (!game.hasPlayer(voter)) {
 			LOGGER.warn("failed to vote citizen, not registered voter={}, game={}", voter, game);
 			throw new UnauthorizedPlayerException(
 					"Player {" + voter.getName() + "} is not registered in game {" + id + "}");
 		}
-		if(game.getIsNight()) {
+		if (game.getIsNight()) {
 			LOGGER.warn("failed to vote citizen during night, voter={}, game={}", game, voter);
 			throw new VoteException("failed to vote citizen during day, game with id=" + id + ", voter=" + voter);
 		}
-		if(!voter.getIsAlive()) {
+		if (!voter.getIsAlive()) {
 			LOGGER.warn("failed vote citizen, not alive voter={}, game={}", voter, game);
 			throw new VoteException("failed to vote citizen, not alive voter=" + voter);
 		}
-		if(!target.getIsAlive()) {
+		if (!target.getIsAlive()) {
 			LOGGER.warn("failed vote citizen, not alive target={}, game={}", target, game);
 			throw new VoteException("failed to vote citizen, not alive target=" + target);
 		}
@@ -152,27 +167,28 @@ public class GameServiceImpl implements GameService {
 		game.citizenVoteAgain(voter, target);
 		sendGameToPlayers(game);
 	}
+
 	@Override
 	public void voteMafia(int id, Player voter, Player target) {
 		Game game = getGame(id);
-		if(!game.hasPlayer(voter)) {
+		if (!game.hasPlayer(voter)) {
 			LOGGER.warn("failed to vote mafia, not registered voter={}, game={}", voter, game);
 			throw new UnauthorizedPlayerException(
 					"Player {" + voter.getName() + "} is not registered in game {" + id + "}");
 		}
-		if(!game.getIsNight()) {
+		if (!game.getIsNight()) {
 			LOGGER.warn("failed to vote mafia during day, voter={}, game={}", game, voter);
 			throw new VoteException("failed to vote mafia during day, game with id=" + id + ", voter=" + voter);
 		}
-		if(!voter.getIsAlive()) {
+		if (!voter.getIsAlive()) {
 			LOGGER.warn("failed vote mafia, not alive voter={}, game={}", voter, game);
 			throw new VoteException("failed to vote mafia, not alive voter=" + voter);
 		}
-		if(!target.getIsAlive()) {
+		if (!target.getIsAlive()) {
 			LOGGER.warn("failed vote mafia, not alive target={}, game={}", target, game);
 			throw new VoteException("failed to vote mafia, not alive target=" + target);
 		}
-		if(!voter.getRoleType().equals(RoleType.MAFIA)) {
+		if (!voter.getRoleType().equals(RoleType.MAFIA)) {
 			LOGGER.warn("failed vote mafia, voter is not mafia voter={}, game={}", voter, game);
 			throw new VoteException("failed to vote mafia, voter is not mafia voter=" + target);
 		}
@@ -180,31 +196,33 @@ public class GameServiceImpl implements GameService {
 		game.mafiaVoteAgain(voter, target);
 		sendGameToPlayers(game);
 	}
-	
+
 	@Override
 	public List<Game> getAccessibleGames() {
 		return games.stream().filter((o) -> !o.getIsStarted() && !o.getIsFinished()).collect(Collectors.toList());
 	}
-	
-	
 
 	@Override
 	public void removePlayer(int id, Player player) {
 		Game game = getGame(id);
 		game.removePlayer(player);
 		LOGGER.debug("player {} removed from game {}", player, game);
-		if(game.getPlayers().size() == 0) {
-			games.removeIf((o) -> o.getId() == id);
-			maxId--;
+		if (game.getPlayers().size() == 0) {
 			LOGGER.info("removing game {} due it has no players", game);
+			removeGame(id);
 		} else {
-			if(game.getCreator().equals(player)) {
+			if (game.getCreator().equals(player)) {
 				Player newCreator = game.getPlayers().get(0);
 				game.setCreator(newCreator);
 				LOGGER.info("creator of game {} removed, changing creator to {}", game, newCreator);
 			}
 			game.sendGame();
 		}
+	}
+
+	private void removeGame(int id) {
+		games.removeIf((o) -> o.getId() == id);
+		gameIdGenerator.releaseId(id);
 	}
 
 	private void sendGameToPlayers(Game game) {
